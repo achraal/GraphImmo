@@ -23,11 +23,18 @@ It uses Neo4j to model users, properties, preferences, and relationships between
 ## Use Case
 This project demonstrates how graph databases can be used to build intelligent recommendation systems in the real estate domain.
 
-React (Apollo Client)
-        ↓
-GraphQL API (/graphql)
-        ↓
-FastAPI + Strawberry
-        ↓
-Neo4j (Cypher Queries)
+        React (Apollo Client)
+                   ↓
+        GraphQL API (/graphql)
+                   ↓
+        FastAPI + Strawberry
+                   ↓
+        Neo4j (Cypher Queries)
+
+
+
+
+
+
+
 
