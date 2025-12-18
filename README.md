@@ -29,4 +29,5 @@ GraphQL API (/graphql)
         ↓
 FastAPI + Strawberry
         ↓
-Neo4j (Cypher queries)
+Neo4j (Cypher Queries)
+
