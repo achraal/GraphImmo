@@ -1,0 +1,57 @@
+@startuml GraphImmo_sequence_recherche
+!theme plain
+skinparam participant {
+  BackgroundColor #E3F2FD
+  BorderColor #1976D2
+}
+skinparam actor {
+  BackgroundColor #FFF3E0
+  BorderColor #F57C00
+}
+
+title **GraphImmo** - Séquence : Recherche de Propriétés (Budget 200k-500k)
+
+actor "Acheteur\nConnecté" as user
+participant "React\n(Apollo Client)" as react
+participant "FastAPI\n(GraphQL)" as fastapi
+database "Neo4j\n(GraphDB)" as neo4j
+
+== Recherche utilisateur ==
+user -> react: Filtre budgetMin=200k, budgetMax=500k
+activate react
+
+== Requête GraphQL ==
+react -> fastapi: POST /graphql\nquery SearchProprietesParBudget
+activate fastapi
+note right: ``````
+
+== Traduction Cypher ==
+fastapi -> neo4j: Cypher Query (auto-générée)
+activate neo4j
+note right: ``````
+
+== Résultats ==
+neo4j --> fastapi: Nœuds + Relations (JSON)
+deactivate neo4j
+
+fastapi --> react: JSON Response (propriétés + agence)
+deactivate fastapi
+
+== Affichage ==
+react --> user: Liste propriétés (MapScreen)
+deactivate react
+
+note right of neo4j
+  **Neo4j optimise :**
+  • 1 requête Cypher = 1 traverse graphe
+  • Pas de JOIN SQL complexe
+  • SIMILAIREA/AIME pré-calculés
+end note
+
+note right of fastapi
+  **FastAPI + Strawberry :**
+  • GraphQL → Cypher auto
+  • Pydantic validation
+  • Async/await
+end note
+@enduml

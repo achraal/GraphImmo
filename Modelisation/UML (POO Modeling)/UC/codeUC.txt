@@ -1,0 +1,77 @@
+@startuml GraphImmo_usecases_final_complete
+!theme plain
+skinparam usecase {
+  BackgroundColor #E3F2FD
+  BorderColor #1976D2
+}
+skinparam actor {
+  BackgroundColor #FFF3E0
+  BorderColor #F57C00
+}
+skinparam rectangle {
+  BackgroundColor white
+}
+
+title **GraphImmo** - Diagramme de Cas d'Utilisation
+
+left to right direction
+
+actor "Visiteur\nanonyme" as guest
+actor "Acheteur\nconnecté" as acheteur
+actor "Agent\nImmobilier" as agent
+
+rectangle " GraphImmo App" {
+  (Rechercher/\nFiltrer propriétés)
+  (Visualiser\nsur carte)
+  (Comparer\npropriétés)
+  
+  (Gérer profil/\npréférences)
+  
+  (Ajouter/\nRetirer favoris)
+  (Consulter\nhistorique)
+  
+  (Recevoir\nrecommandations)
+  (Matching\nutilisateur-propriété)
+  
+  (Demander\nvisite)
+  (Recevoir\nnotifications)
+  
+  (Consulter\nstatistiques)
+}
+
+' Visiteur anonyme (base)
+guest -down-> (Rechercher/\nFiltrer propriétés)
+guest -down-> (Visualiser\nsur carte)
+guest -down-> (Comparer\npropriétés)
+
+' Acheteur connecté (TOUT + avancés)
+acheteur -down-> (Rechercher/\nFiltrer propriétés) : <<extend>>
+acheteur -down-> (Visualiser\nsur carte) : <<extend>>
+acheteur -down-> (Comparer\npropriétés) : <<extend>>
+
+acheteur -down-> (Gérer profil/\npréférences)
+acheteur -down-> (Ajouter/\nRetirer favoris)
+acheteur -down-> (Consulter\nhistorique)
+acheteur --> (Recevoir\nrecommandations) : <<extend>>
+acheteur --> (Matching\nutilisateur-propriété) : <<include>>
+acheteur -down-> (Demander\nvisite)
+acheteur <.. (Recevoir\nnotifications) : <<extend>>
+
+' Agent
+agent -down-> (Consulter\nstatistiques)
+agent ..> (Demander\nvisite) : <<include>> (réception)
+
+note right of (Rechercher/\nFiltrer propriétés)
+  **RechercheScreen**
+  Budget/Surface/
+  Localisation/Rayon
+  (historique perso si connecté)
+end note
+
+note right of (Recevoir\nrecommandations)
+  **Neo4j GDS**
+  • SIMILAIREA
+  • PageRank
+  • Collaboratif
+end note
+@enduml
