@@ -13,7 +13,7 @@ title **GraphImmo** - Séquence : Recherche de Propriétés (Budget 200k-500k)
 
 actor "Acheteur\nConnecté" as user
 participant "React\n(Apollo Client)" as react
-participant "FastAPI\n(GraphQL)" as fastapi
+participant "FastAPI\n(GraphQL + Resolvers Strawberry)" as fastapi
 database "Neo4j\n(GraphDB)" as neo4j
 
 == Recherche utilisateur ==
@@ -23,15 +23,15 @@ activate react
 == Requête GraphQL ==
 react -> fastapi: POST /graphql\nquery SearchProprietesParBudget
 activate fastapi
-note right: ``````
+note right: (Query GraphQL envoyée par Apollo)
 
-== Traduction Cypher ==
-fastapi -> neo4j: Cypher Query (auto-générée)
+== Resolver exécute Cypher ==
+fastapi -> neo4j: session.run(Cypher, params)\nMATCH (p:Propriete) WHERE ...
 activate neo4j
-note right: ``````
+note right: (Cypher paramétré exécuté via neo4j-driver)
 
 == Résultats ==
-neo4j --> fastapi: Nœuds + Relations (JSON)
+neo4j --> fastapi: Records Neo4j (JSON/objects)
 deactivate neo4j
 
 fastapi --> react: JSON Response (propriétés + agence)
@@ -45,13 +45,13 @@ note right of neo4j
   **Neo4j optimise :**
   • 1 requête Cypher = 1 traverse graphe
   • Pas de JOIN SQL complexe
-  • SIMILAIREA/AIME pré-calculés
 end note
 
 note right of fastapi
   **FastAPI + Strawberry :**
-  • GraphQL → Cypher auto
-  • Pydantic validation
+  • GraphQL déclenche un resolver
+  • Resolver exécute Cypher via neo4j-driver
+  • Validation Pydantic (si utilisée)
   • Async/await
 end note
 @enduml
