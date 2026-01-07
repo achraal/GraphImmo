@@ -16,7 +16,9 @@ from datetime import datetime, timedelta, timezone
 # Connexion Neo4j (adapte avec tes creds Graphimmo)
 driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "megustacolombiana"))
 
-SECRET_KEY = secrets.token_hex(32)
+#SECRET_KEY = secrets.token_hex(32)
+SECRET_KEY = "graphimmo_super_secret_32_chars_12345678901234567890"
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
 # pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -452,7 +454,36 @@ class Query:
                 role=role
             )
             return [User(**record.data()) for record in result]
-
+    @strawberry.field  # ← OBLIGATOIRE !
+    def me(self, token: str) -> User | None:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            email = payload["sub"]
+            
+            with driver.session() as session:
+                result = session.run(
+                    """
+                    MATCH (u:User {email: $email})
+                    RETURN 
+                        u.id AS id,
+                        u.nom AS nom,
+                        u.prenom AS prenom,
+                        u.email AS email,
+                        u.role AS role,
+                        u.budget AS budget,
+                        u.surface_min AS surface_min,
+                        u.preferences_location AS preferences_location,
+                        u.ville_prefs AS ville_prefs,
+                        u.created_at AS created_at
+                    """,
+                    email=email
+                )
+                record = result.single()
+                if record:
+                    return User(**record.data())  # ← .data() pas ["u"]
+                return None
+        except JWTError:
+            return None
 
         
 @strawberry.type
@@ -481,19 +512,47 @@ class Mutation:
             return create_access_token({"sub": input.email})
     
     @strawberry.mutation
-    def update_profil(self, input: UserUpdateInput, token: Optional[str] = None) -> User:
-        # TODO: JWT validation + user_id extraction (simplifié)
-        user_id = "USER001"  # À remplacer par JWT decode
+    def update_profil(self, input: UserUpdateInput, token: str) -> User:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload["sub"]
+        
         with driver.session() as session:
+            result = session.run(
+                "MATCH (u:User {email: $email}) RETURN u.id AS id",
+                email=email
+            )
+            record = result.single()
+            if not record:
+                raise HTTPException(status_code=404, detail="User introuvable")
+
+            user_id = record["id"]
+
+            
             updates = {k: v for k, v in input.__dict__.items() if v is not None}
             result = session.run("""
                 MATCH (u:User {id: $user_id})
                 SET u += $updates, u.updated_at = datetime()
-                RETURN u.id AS id, u.nom AS nom, u.prenom AS prenom, u.email AS email, 
-                u.role AS role, u.budget AS budget, u.surface_min AS surface_min,
-                u.preferences_location AS preferences_location, u.ville_prefs AS ville_prefs
+                RETURN 
+                    u.id AS id, u.nom AS nom, u.prenom AS prenom, u.email AS email, 
+                    u.role AS role, u.budget AS budget, u.surface_min AS surface_min,
+                    u.preferences_location AS preferences_location, u.ville_prefs AS ville_prefs
             """, user_id=user_id, updates=updates)
-            return User(**dict(result.single()["u"]))
+            
+            record = result.single()
+            return User(**record.data())
+    @strawberry.mutation
+    def login(self, email: str, password: str) -> str:
+        with driver.session() as session:
+            result = session.run(
+                "MATCH (u:User {email: $email}) RETURN u",
+                email=email
+            )
+            record = result.single()
+            if not record or not verify_password(password, record["u"]["password"]):
+                raise HTTPException(status_code=401, detail="Identifiants invalides")
+            return create_access_token({"sub": email, "user_id": record["u"]["id"]})
+
+
 
 # Schema FINAL
 schema = strawberry.Schema(query=Query, mutation=Mutation)
