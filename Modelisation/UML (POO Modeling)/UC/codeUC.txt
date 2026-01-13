@@ -1,4 +1,4 @@
-@startuml GraphImmo_usecases_final_complete
+@startuml GraphImmo_usecases_final
 !theme plain
 skinparam usecase {
   BackgroundColor #E3F2FD
@@ -12,7 +12,7 @@ skinparam rectangle {
   BackgroundColor white
 }
 
-title **GraphImmo** - Diagramme de Cas d'Utilisation
+title GraphImmo - Cas d'Utilisation
 
 left to right direction
 
@@ -20,58 +20,45 @@ actor "Visiteur\nanonyme" as guest
 actor "Acheteur\nconnecté" as acheteur
 actor "Agent\nImmobilier" as agent
 
-rectangle " GraphImmo App" {
+rectangle "GraphImmo App" {
   (Rechercher/\nFiltrer propriétés)
   (Visualiser\nsur carte)
   (Comparer\npropriétés)
-  
   (Gérer profil/\npréférences)
-  
   (Ajouter/\nRetirer favoris)
   (Consulter\nhistorique)
-  
   (Recevoir\nrecommandations)
-  (Matching\nutilisateur-propriété)
-  
   (Demander\nvisite)
   (Recevoir\nnotifications)
-  
   (Consulter\nstatistiques)
 }
 
-' Visiteur anonyme (base)
 guest -down-> (Rechercher/\nFiltrer propriétés)
 guest -down-> (Visualiser\nsur carte)
 guest -down-> (Comparer\npropriétés)
 
-' Acheteur connecté (TOUT + avancés)
-acheteur -down-> (Rechercher/\nFiltrer propriétés) : <<extend>>
-acheteur -down-> (Visualiser\nsur carte) : <<extend>>
-acheteur -down-> (Comparer\npropriétés) : <<extend>>
-
+acheteur -down-> (Rechercher/\nFiltrer propriétés)
+acheteur -down-> (Visualiser\nsur carte)
+acheteur -down-> (Comparer\npropriétés)
 acheteur -down-> (Gérer profil/\npréférences)
 acheteur -down-> (Ajouter/\nRetirer favoris)
 acheteur -down-> (Consulter\nhistorique)
 acheteur --> (Recevoir\nrecommandations) : <<extend>>
-acheteur --> (Matching\nutilisateur-propriété) : <<include>>
 acheteur -down-> (Demander\nvisite)
 acheteur <.. (Recevoir\nnotifications) : <<extend>>
 
-' Agent
 agent -down-> (Consulter\nstatistiques)
-agent ..> (Demander\nvisite) : <<include>> (réception)
+agent ..> (Demander\nvisite) : <<include>>
 
 note right of (Rechercher/\nFiltrer propriétés)
-  **RechercheScreen**
+  RechercheScreen
   Budget/Surface/
   Localisation/Rayon
-  (historique perso si connecté)
 end note
 
 note right of (Recevoir\nrecommandations)
-  **Neo4j GDS**
-  • SIMILAIREA
+  Neo4j GDS
+  • SIMILAIRE_A
   • PageRank
-  • Collaboratif
 end note
 @enduml

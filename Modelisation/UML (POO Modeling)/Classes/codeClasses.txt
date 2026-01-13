@@ -3,9 +3,8 @@
 skinparam classAttributeIconSize 0
 hide methods
 
-title GraphImmo - Diagramme de classes (POO)
+title GraphImmo - Diagramme de classes GraphImmo
 
-' Un peu de style (optionnel)
 skinparam class {
   BackgroundColor White
   BorderColor Black
@@ -16,20 +15,9 @@ skinparam note {
   BorderColor #333333
 }
 
-' =====================
-' Enumerations
-' =====================
 enum RoleUtilisateur {
   ACHETEUR
-  LOCATAIRE
-  VENDEUR
-  AGENT_IMMOBILIER
-}
-
-enum StatutTransaction {
-  EN_COURS
-  TERMINEE
-  ANNULEE
+  AGENT
 }
 
 enum StatutDemandeVisite {
@@ -43,9 +31,6 @@ enum QualitePhoto {
   HD
 }
 
-' =====================
-' Classes (nœuds Neo4j)
-' =====================
 class User {
   +id: String
   +nom: String
@@ -53,9 +38,11 @@ class User {
   +email: String
   +budget: Float
   +surfaceMin: Float
-  +villePrefs: String
+  +villePrefs: array<String>
   +preferencesLocation: String
   +role: RoleUtilisateur
+  +created_at: DateTime
+  +password: String
 }
 
 class Propriete {
@@ -66,8 +53,8 @@ class Propriete {
   +surface: Float
   +chambres: Int
   +adresse: String
-  +geoLat: Float
-  +geoLon: Float
+  +geo: array<Float>
+  +pageRank: Float
 }
 
 class Agence {
@@ -79,6 +66,7 @@ class Agence {
 }
 
 class Localisation {
+  +id: String
   +latitude: Float
   +longitude: Float
   +commune: String
@@ -87,46 +75,69 @@ class Localisation {
   +securite: String
 }
 
-class Transaction {
-  +id: String
-  +date: DateTime
-  +montant: Float
-  +statut: StatutTransaction
-}
-
 class Amenagement {
+  +id: String
   +type: String
   +qualite: String
 }
 
 class Photo {
+  +id: String
   +url: String
   +angle: String
   +dateUpload: DateTime
   +qualite: QualitePhoto
 }
 
-class HistoriqueVisite {
+class Visite {
+  +id: String
   +dateVisite: DateTime
-  +notes: String
-  +prixPropose: Float
 }
 
-' =====================
-' Relations Neo4j (avec propriétés)
-' =====================
-class Favori <<relationship>> {
-  +dateAjout: DateTime
+class NotificationUser {
+  +id: String
+  +agent_nom: String
+  +date: DateTime
+  +demandeid: String
+  +lu: Boolean
+  +message: String
+  +nouveau_statut: String
+  +type: String
+  +propriete_id: String
+  +propriete_titre: String
+}
+
+class NotificationAgent {
+  +id: String
+  +date: DateTime
+  +date_souhaitee: String
+  +demandeid: String
+  +heure: String
+  +lu: Boolean
+  +message: String
+  +propriete_id: String
+  +proriete_titre: String
+  +type: String
+  +user_nom: String
+  +user_id: String
+}
+
+class Aime <<relationship>> {
+  +date_ajout: DateTime
   +note: Int
 }
 
-class VisiteRel <<relationship>> {
-  +date: DateTime
-  +impression: String
+class Gere <<relationship>> {
+  +date_depot: DateTime
 }
 
-class Gestion <<relationship>> {
-  +dateDepot: DateTime
+class DemandeVisiteRel <<relationship>> {
+  +datesouhaitee: Date
+  +heure: String
+  +statut: StatutDemandeVisite
+  +date_creation: DateTime
+  +message: String
+  +id: String
 }
 
 class ProcheDe <<relationship>> {
@@ -137,95 +148,50 @@ class SimilaireA <<relationship>> {
   +scoreSimilarite: Float
 }
 
-class InteressePar <<relationship>> {
-  +priorite: Int
-}
-
-class RecommandeePour <<relationship>> {
-  +score: Float
-}
-
 class DansQuartier <<relationship>> {
-  +prixM2Local: Float
-}
-
-class NotificationRel <<relationship>> {
-  +type: String
-  +date: DateTime
-  +lu: Boolean
-  +message: String
-  +proprieteId: String
-}
-
-class DemandeVisite <<relationship>> {
-  +dateSouhaitee: Date
-  +heure: String
-  +statut: StatutDemandeVisite
-  +dateCreation: DateTime
-  +message: String
+  +prix_m2_local: Float
 }
 
 class SimilaireParAmenagement <<relationship>> {
   +scoreAmenagement: Float
 }
 
-' =====================
-' Associations
-' (tu peux remplacer -- par ||-- si tu veux un rendu plus "fort")
-' =====================
-User "1" -- "0..*" Favori : AIME
-Favori "0..*" -- "1" Propriete
+User "1" -- "0..*" Aime : > AIME
+Aime "1" -- "1" Propriete
 
-User "1" -- "0..*" VisiteRel : VISITE (site web)
-VisiteRel "0..*" -- "1" Propriete
+Propriete "1" -- "0..*" Gere : < GERE
+Gere "1" -- "1" Agence
 
-Agence "1" -- "0..*" Gestion : GERE
-Gestion "0..*" -- "1" Propriete
+User "1" -- "0..*" DemandeVisiteRel : > DEMANDE_VISITE (réelle)
+DemandeVisiteRel "1" -- "1" Propriete
 
-Propriete "1" -- "0..*" ProcheDe : PROCHEDE
-ProcheDe "0..*" -- "1" Propriete : voisine
+User "1" -- "1" Visite : > A_VISITE (web, direct)
+Visite "1" -- "1" Propriete : > CONCERNE
 
-Propriete "1" -- "0..*" SimilaireA : SIMILAIREA
-SimilaireA "0..*" -- "1" Propriete : similaire
+Propriete "1" -- "0..*" Amenagement : > POSSEDE_AMENAGEMENT
+Propriete "1" -- "0..*" Photo : > A_PHOTO
 
-User "1" -- "0..*" InteressePar : INTERESSEPAR
-InteressePar "0..*" -- "1" Localisation
+Propriete "1" -- "0..*" SimilaireA : > SIMILAIRE_A
+SimilaireA "1" -- "1" Propriete
 
-Propriete "1" -- "0..*" RecommandeePour : RECOMMANDEEPOUR
-RecommandeePour "0..*" -- "1" User
+Propriete "1" -- "0..*" ProcheDe : > PROCHE_DE
+ProcheDe "1" -- "1" Propriete
 
-Propriete "1" -- "1" DansQuartier : DANSQUARTIER
-DansQuartier "0..*" -- "1" Localisation
+Propriete "1" -- "0..*" DansQuartier : > DANSQUARTIER
+DansQuartier "1" -- "1" Localisation
 
-Propriete "1" -- "0..*" Amenagement : POSSEDEAMENAGEMENT
-Propriete "1" -- "0..*" Photo : APHOTO
+Propriete "1" -- "0..*" SimilaireParAmenagement : > SIMILAIRE_PAR_AMENAGEMENT
+SimilaireParAmenagement "1" -- "1" Propriete
 
-User "1" -- "0..*" Transaction : AEFFECTUE
+NotificationUser "1" -- "1" User : > POUR_USER
+NotificationAgent "1" -- "1" Agence : > POUR_AGENT
 
-User "1" -- "0..*" NotificationRel : NOTIFICATION
-NotificationRel "0..*" -- "1" Propriete
-
-User "1" -- "0..*" DemandeVisite : DEMANDEVISITE
-DemandeVisite "0..*" -- "1" Propriete
-
-Propriete "1" -- "0..*" SimilaireParAmenagement : SIMILAIREPARAMENAGEMENT
-SimilaireParAmenagement "0..*" -- "1" Propriete : similaireAmenagement
-
-' Historique visite réelle (nœud)
-User "1" -- "0..*" HistoriqueVisite : visite réelle
-HistoriqueVisite "0..*" -- "1" Propriete : concerne
-
-' =====================
-' Notes (optionnelles)
-' =====================
-note right of VisiteRel
-VISITE = consultation sur le site
-(traçage navigation)
+note right of Visite
+  Visite web 
 end note
 
-note right of HistoriqueVisite
-HistoriqueVisite = visite réelle du bien
-(notes + prix proposé)
+note right of DemandeVisiteRel
+  Demande visite réelle
 end note
 
 @enduml
