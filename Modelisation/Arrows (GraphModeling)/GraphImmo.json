@@ -56,10 +56,10 @@
     {
       "id": "n0",
       "position": {
-        "x": -36.68092481025523,
-        "y": -143.5275728956094
+        "x": 104.96044824583583,
+        "y": 34.41997572948594
       },
-      "caption": "User",
+      "caption": "Utilisateurs",
       "labels": [
         "User"
       ],
@@ -71,7 +71,10 @@
         "budget": "\"number\"",
         "preferences_location": "\"string\"",
         "surface_min": "\"number\"",
-        "ville_prefs": "array"
+        "ville_prefs": "array",
+        "created_at": "\"date\"",
+        "password": "\"argon\"",
+        "role": "\"string\""
       },
       "style": {
         "node-color": "#fda1ff",
@@ -79,30 +82,10 @@
       }
     },
     {
-      "id": "n1",
-      "position": {
-        "x": -163.70989269220135,
-        "y": 288.66837050942684
-      },
-      "caption": "Historique achat/location",
-      "labels": [
-        "Transaction"
-      ],
-      "properties": {
-        "id": "\"string\"",
-        "date": "\"date\"",
-        "montant": "\"number\"",
-        "statut": "\"string\""
-      },
-      "style": {
-        "node-color": "#fda1ff"
-      }
-    },
-    {
       "id": "n2",
       "position": {
-        "x": 577.6502612911631,
-        "y": 317.8067091136515
+        "x": 608.06347448332,
+        "y": 244.41072246197197
       },
       "caption": "Propriete",
       "labels": [
@@ -116,7 +99,8 @@
         "surface": "\"number\"",
         "chambres": "\"number\"",
         "adresse": "\"string\"",
-        "geo": "\"array\""
+        "geo": "\"array\"",
+        "pageRank": "\"GDS number\""
       },
       "style": {
         "node-color": "#fda1ff"
@@ -125,17 +109,16 @@
     {
       "id": "n3",
       "position": {
-        "x": 655.5957063633039,
-        "y": -175.91025802384496
+        "x": 480.7827655951576,
+        "y": -158.31690174967673
       },
       "caption": "Historique de visite",
       "labels": [
         "Visite"
       ],
       "properties": {
-        "date_visite": "\"date\"",
-        "notes": "\"string\"",
-        "prix_propose": "\"number\""
+        "dateVisite": "\"date\"",
+        "id": "\"string\""
       },
       "style": {
         "node-color": "#fda1ff"
@@ -144,8 +127,8 @@
     {
       "id": "n4",
       "position": {
-        "x": 892.6036875424993,
-        "y": -127.6329941214072
+        "x": 777.9110239918593,
+        "y": -142.29553309148608
       },
       "caption": "Agence immobilière",
       "labels": [
@@ -165,8 +148,8 @@
     {
       "id": "n5",
       "position": {
-        "x": 1096.9828109352982,
-        "y": 288.66837050942684
+        "x": 1111.166500720804,
+        "y": 174.56598501563565
       },
       "caption": "Équipements propriété",
       "labels": [
@@ -174,17 +157,19 @@
       ],
       "properties": {
         "type": "\"string\"",
-        "qualite": "\"string\""
+        "qualite": "\"string\"",
+        "id": "\"string\""
       },
       "style": {
-        "node-color": "#fda1ff"
+        "node-color": "#fda1ff",
+        "property-alignment": "center"
       }
     },
     {
       "id": "n6",
       "position": {
-        "x": 104.96044824583583,
-        "y": 534.877390090299
+        "x": 287.78297044827633,
+        "y": 519.7474561051431
       },
       "caption": "Coordonnées géographiques",
       "labels": [
@@ -196,7 +181,8 @@
         "commune": "\"string\"",
         "region": "\"string\"",
         "prix_m2": "\"number\"",
-        "securite": "\"string\""
+        "securite": "\"string\"",
+        "id": "\"string\""
       },
       "style": {
         "node-color": "#fda1ff"
@@ -205,8 +191,8 @@
     {
       "id": "n7",
       "position": {
-        "x": 1055.3218209970119,
-        "y": 42.02290553325133
+        "x": 971.3871933359006,
+        "y": -11.399612147064778
       },
       "caption": "Images propriété",
       "labels": [
@@ -216,10 +202,66 @@
         "url": "\"string\"",
         "angle": "\"string\"",
         "date_upload": "\"date\"",
-        "qualite": "\"string\""
+        "qualite": "\"string\"",
+        "id": "\"string\""
       },
       "style": {
         "node-color": "#fda1ff"
+      }
+    },
+    {
+      "id": "n8",
+      "position": {
+        "x": 1166.7568035294428,
+        "y": -213.25064702654498
+      },
+      "caption": "Notification Agent",
+      "style": {
+        "node-color": "#fda1ff"
+      },
+      "labels": [
+        "Notification"
+      ],
+      "properties": {
+        "id": "\"string\"",
+        "date": "\"date\"",
+        "date_souhaitee": "\"string\"",
+        "demandeid": "\"string\"",
+        "heure": "\"string\"",
+        "lu": "\"boolean\"",
+        "message": "\"string\"",
+        "propriete_id": "\"string\"",
+        "proriete_titre": "\"string\"",
+        "type": "\"string\"",
+        "user_nom": "\"string\"",
+        "user_id": "\"string\""
+      }
+    },
+    {
+      "id": "n9",
+      "position": {
+        "x": 104.96044824583583,
+        "y": 341.9934656225767
+      },
+      "caption": "Notification User",
+      "style": {
+        "node-color": "#fda1ff",
+        "property-alignment": "colon"
+      },
+      "labels": [
+        "Notification "
+      ],
+      "properties": {
+        "id": "\"string\"",
+        "agent_nom": "\"string\"",
+        "date": "\"date\"",
+        "demandeid": "\"string\"",
+        "lu": "\"boolean\"",
+        "message": "\"string\"",
+        "nouveau_statut": "\"string\"",
+        "type": "\"string\"",
+        "propriete_id": "\"string\"",
+        "propriete_titre": "\"string\""
       }
     }
   ],
@@ -234,9 +276,6 @@
         "note": "\"number\""
       },
       "style": {
-        "directionality": "directed",
-        "detail-position": "above",
-        "attachment-start": "top",
         "property-color": "#16a5a5",
         "type-color": "#f44e3b",
         "property-font-size": 16,
@@ -269,7 +308,7 @@
       "toId": "n2",
       "type": "SIMILAIRE_A",
       "properties": {
-        "score_similarite": "\"number\""
+        "scoreSimilarite": "\"number\""
       },
       "style": {
         "detail-position": "below",
@@ -287,42 +326,9 @@
       "toId": "n2",
       "type": "PROCHE_DE",
       "properties": {
-        "distance_km": "\"number\""
+        "distanceKm": "\"number\""
       },
       "style": {
-        "property-color": "#16a5a5",
-        "type-color": "#f44e3b",
-        "property-font-size": 16,
-        "type-background-color": "#ffffff",
-        "arrow-color": "#000000"
-      }
-    },
-    {
-      "id": "n5",
-      "fromId": "n0",
-      "toId": "n6",
-      "type": "INTERESSE_PAR",
-      "properties": {
-        "priorite": "\"number\""
-      },
-      "style": {
-        "property-color": "#16a5a5",
-        "type-color": "#f44e3b",
-        "property-font-size": 16,
-        "type-background-color": "#ffffff",
-        "arrow-color": "#000000"
-      }
-    },
-    {
-      "id": "n6",
-      "fromId": "n2",
-      "toId": "n0",
-      "type": "RECOMMENDEE_POUR",
-      "properties": {
-        "score": "\"number\""
-      },
-      "style": {
-        "attachment-end": "left",
         "property-color": "#16a5a5",
         "type-color": "#f44e3b",
         "property-font-size": 16,
@@ -332,19 +338,19 @@
     },
     {
       "id": "n7",
-      "fromId": "n2",
-      "toId": "n6",
-      "type": "DANS_QUARTIER ",
-      "properties": {
-        "prix_m2_local": "\"number\""
-      },
+      "type": "DANSQUARTIER ",
       "style": {
         "property-color": "#16a5a5",
         "type-color": "#f44e3b",
         "property-font-size": 16,
         "type-background-color": "#ffffff",
         "arrow-color": "#000000"
-      }
+      },
+      "properties": {
+        "prix_m2_local": "\"number\""
+      },
+      "fromId": "n2",
+      "toId": "n6"
     },
     {
       "id": "n8",
@@ -373,24 +379,12 @@
       }
     },
     {
-      "id": "n10",
-      "fromId": "n0",
-      "toId": "n1",
-      "type": "A_EFFECTUE ",
-      "properties": {},
-      "style": {
-        "type-color": "#f44e3b",
-        "type-background-color": "#ffffff",
-        "arrow-color": "#000000"
-      }
-    },
-    {
       "id": "n11",
       "fromId": "n2",
       "toId": "n2",
       "type": "SIMILAIRE_PAR_AMENAGEMENT ",
       "properties": {
-        "score_amenagement": "\"number\""
+        "scoreAmenagement": "\"number\""
       },
       "style": {
         "property-color": "#16a5a5",
@@ -406,46 +400,23 @@
       "toId": "n2",
       "type": "DEMANDE_VISITE ",
       "properties": {
-        "date_souhaitee": "\"date\"",
+        "datesouhaitee": "\"date\"",
         "heure": "\"string\"",
         "statut": "\"string\"",
         "date_creation": "\"date\"",
-        "message": "\"string\""
+        "message": "\"string\"",
+        "id": "\"string\""
       },
       "style": {
-        "attachment-end": "right",
+        "attachment-end": "top",
         "type-color": "#f44e3b",
         "property-color": "#16a5a5",
         "property-font-size": 14,
         "type-background-color": "#ffffff",
         "property-alignment": "center",
-        "arrow-color": "#000000"
-      }
-    },
-    {
-      "id": "n13",
-      "fromId": "n0",
-      "toId": "n2",
-      "type": "NOTIFICATION ",
-      "properties": {
-        "type": "\"string\"",
-        "date": "\"date\"",
-        "lu": "\"boolean\"",
-        "message": "\"string\"",
-        "propriete_id": "\"string\""
-      },
-      "style": {
-        "margin-peer": 50,
-        "attachment-start": "normal",
-        "attachment-end": "bottom",
-        "property-color": "#16a5a5",
-        "type-color": "#f44e3b",
-        "type-background-color": "#ffffff",
-        "type-border-width": 0,
-        "type-padding": 7,
-        "type-font-size": 18,
-        "property-font-size": 14,
-        "arrow-color": "#000000"
+        "arrow-color": "#000000",
+        "directionality": "directed",
+        "detail-position": "above"
       }
     },
     {
@@ -471,6 +442,30 @@
         "type-background-color": "#ffffff",
         "arrow-color": "#000000"
       }
+    },
+    {
+      "id": "n16",
+      "type": "POUR_AGENT",
+      "style": {
+        "arrow-color": "#000000",
+        "type-background-color": "#ffffff",
+        "type-color": "#f44e3b"
+      },
+      "properties": {},
+      "fromId": "n8",
+      "toId": "n4"
+    },
+    {
+      "id": "n17",
+      "type": "POUR_USER",
+      "style": {
+        "arrow-color": "#000000",
+        "type-background-color": "#ffffff",
+        "type-color": "#f44e3b"
+      },
+      "properties": {},
+      "fromId": "n9",
+      "toId": "n0"
     }
   ]
 }
