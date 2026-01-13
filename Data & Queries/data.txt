@@ -1,0 +1,848 @@
+CREATE 
+  (a:Amenagement {type: "Piscine", qualite: "Excellent"}),
+  (p1:Propriete {
+    id: "PROP001", 
+    titre: "Villa moderne avec vue mer", 
+    description: "Magnifique villa rénovée", 
+    prix: 2500000, 
+    surface: 250, 
+    chambres: 4, 
+    adresse: "123 Boulevard de la Corniche", 
+    geo: [33.5731, -7.5898]
+  }),
+  (l:Localisation {
+    latitude: 33.5731, 
+    longitude: -7.5898, 
+    commune: "Ain Diab", 
+    region: "Casablanca-Settat", 
+    prix_m2: 15000, 
+    securite: "Haute"
+  }),
+  (u:User {
+    id: "USER001", 
+    nom: "Alami", 
+    prenom: "Hassan", 
+    email: "h.alami@example.com", 
+    budget: 3000000, 
+    preferences_location: "Bord de mer", 
+    surface_min: 200, 
+    ville_prefs: ["Casablanca", "Rabat"]
+  }),
+  (ag:Agence {
+    id: "AG001", 
+    nom: "Immobilier Premium", 
+    telephone: "+212522123456", 
+    email: "contact@premium.ma", 
+    adresse: "45 Rue Prince Moulay Abdellah"
+  }),
+  (ph:Photo {
+    url: "https://example.com/photo1.jpg", 
+    angle: "Facade", 
+    date_upload: date("2025-12-01"), 
+    qualite: "HD"
+  }),
+  (p2:Propriete {
+    id: "PROP002", 
+    titre: "Appartement standing", 
+    description: "Spacieux appartement", 
+    prix: 1800000, 
+    surface: 180, 
+    chambres: 3, 
+    adresse: "78 Avenue Hassan II", 
+    geo: [33.5892, -7.6114]
+  }),
+  (t:Transaction {
+    id: "TRANS001", 
+    date: date("2025-11-15"), 
+    montant: 2500000, 
+    statut: "Finalisée"
+  }),
+  (v:Visite {
+    date_visite: date("2025-12-10"), 
+    notes: "Client intéressé", 
+    prix_propose: 2400000
+  }),
+  
+  (p1)-[:POSSEDE_AMENAGEMENT]->(a),
+  (p1)-[:DANS_QUARTIER {prix_m2_local: 16000}]->(l),
+  (u)-[:INTERESSE_PAR {priorite: 1}]->(l),
+  (u)-[:AIME {date_ajout: date("2025-12-20"), note: 9}]->(p1),
+  (ag)-[:GERE {date_depot: date("2025-11-01")}]->(p1),
+  (p1)-[:A_PHOTO]->(ph),
+  (p1)-[:SIMILAIRE_A {score_similarite: 0.85}]->(p2),
+  (p1)-[:PROCHE_DE {distance_km: 2.5}]->(p2),
+  (p1)-[:RECOMMENDEE_POUR {score: 0.92}]->(u),
+  (u)-[:A_EFFECTUE]->(t),
+  (p1)-[:SIMILAIRE_PAR_AMENAGEMENT {score_amenagement: 0.78}]->(p2),
+  (u)-[:DEMANDE_VISITE {
+    date_souhaitee: date("2025-12-10"), 
+    heure: "14:30", 
+    statut: "Confirmée", 
+    date_creation: date("2025-12-05"), 
+    message: "Visite après-midi"
+  }]->(p2),
+  (u)-[:NOTIFICATION {
+    type: "Nouvelle propriété", 
+    date: date("2025-12-20"), 
+    lu: false, 
+    message: "Une nouvelle propriété correspond à vos critères", 
+    propriete_id: "PROP001"
+  }]->(p1),
+  (v)-[:CONCERNE]->(p2),
+  (u)-[:A_VISITE]->(v)
+
+RETURN *
+
+
+
+
+
+
+
+-----------------
+
+
+
+
+// Effacer les données de test (attention !)
+MATCH (n) DETACH DELETE n;
+
+// --- AGENCES ---
+CREATE (:Agence {
+  id: "AG001",
+  nom: "Immobilier Premium",
+  telephone: "+212522123456",
+  email: "contact@premium.ma",
+  adresse: "45 Rue Prince Moulay Abdellah"
+}),
+(:Agence {
+  id: "AG002",
+  nom: "Casablanca Immo",
+  telephone: "+212522654321",
+  email: "contact@casa-immo.ma",
+  adresse: "12 Rue Abou Bakr Esseddik"
+});
+
+// --- LOCALISATIONS / QUARTIERS ---
+CREATE
+(:Localisation {
+  id: "LOC_AIN_DIAB",
+  latitude: 33.595,
+  longitude: -7.667,
+  commune: "Casablanca",
+  region: "Casablanca-Settat",
+  prix_m2: 20000,
+  securite: "Élevée"
+}),
+(:Localisation {
+  id: "LOC_GAUTHIER",
+  latitude: 33.594,
+  longitude: -7.632,
+  commune: "Casablanca",
+  region: "Casablanca-Settat",
+  prix_m2: 18000,
+  securite: "Bonne"
+}),
+(:Localisation {
+  id: "LOC_RABAT_AGDAL",
+  latitude: 34.004,
+  longitude: -6.847,
+  commune: "Rabat",
+  region: "Rabat-Salé-Kénitra",
+  prix_m2: 17000,
+  securite: "Bonne"
+});
+
+// --- AMÉNAGEMENTS ---
+CREATE
+(:Amenagement {id:"AM_PISCINE", type:"Piscine", qualite:"Haute"}),
+(:Amenagement {id:"AM_GARAGE", type:"Garage", qualite:"Standard"}),
+(:Amenagement {id:"AM_TERRASSE", type:"Terrasse", qualite:"Haute"});
+
+// --- UTILISATEURS ---
+CREATE
+(:User {
+  id: "USER001",
+  nom: "Alami",
+  prenom: "Hassan",
+  email: "h.alami@example.com",
+  budget: 3000000,
+  preferences_location: "Bord de mer",
+  surface_min: 200,
+  ville_prefs: ["Casablanca", "Rabat"]
+}),
+(:User {
+  id: "USER002",
+  nom: "Bennani",
+  prenom: "Sara",
+  email: "s.bennani@example.com",
+  budget: 1800000,
+  preferences_location: "Centre-ville",
+  surface_min: 100,
+  ville_prefs: ["Casablanca"]
+});
+
+// --- PROPRIÉTÉS ---
+CREATE
+(:Propriete {
+  id: "PROP001",
+  titre: "Villa moderne avec vue mer",
+  description: "Magnifique villa rénovée avec piscine et vue sur la Corniche.",
+  prix: 2500000,
+  surface: 250,
+  chambres: 4,
+  adresse: "123 Boulevard de la Corniche",
+  geo: [33.5731, -7.5898]
+}),
+(:Propriete {
+  id: "PROP002",
+  titre: "Appartement standing proche centre",
+  description: "Spacieux appartement au cœur de Casablanca.",
+  prix: 1800000,
+  surface: 180,
+  chambres: 3,
+  adresse: "78 Avenue Hassan II",
+  geo: [33.5892, -7.6114]
+}),
+(:Propriete {
+  id: "PROP003",
+  titre: "Appartement cosy à Gauthier",
+  description: "Appartement moderne idéal pour jeune couple.",
+  prix: 1300000,
+  surface: 95,
+  chambres: 2,
+  adresse: "Rue du Capitaine Arrigui",
+  geo: [33.5945, -7.6325]
+}),
+(:Propriete {
+  id: "PROP004",
+  titre: "Villa familiale Agdal",
+  description: "Villa avec jardin dans un quartier calme.",
+  prix: 2700000,
+  surface: 230,
+  chambres: 4,
+  adresse: "Rue Oued Ziz, Agdal",
+  geo: [34.0045, -6.8475]
+});
+
+// --- PHOTOS ---
+MATCH (p1:Propriete {id:"PROP001"})
+CREATE
+  (:Photo {
+    id:"P001_1",
+    url:"https://picsum.photos/seed/prop001-1/800/600",
+    angle:"Facade",
+    date_upload: date("2025-11-01"),
+    qualite:"HD"
+  })<-[:APHOTO]-(p1),
+  (:Photo {
+    id:"P001_2",
+    url:"https://picsum.photos/seed/prop001-2/800/600",
+    angle:"Salon",
+    date_upload: date("2025-11-02"),
+    qualite:"HD"
+  })<-[:APHOTO]-(p1);
+
+MATCH (p2:Propriete {id:"PROP002"})
+CREATE
+  (:Photo {
+    id:"P002_1",
+    url:"https://picsum.photos/seed/prop002-1/800/600",
+    angle:"Salon",
+    date_upload: date("2025-11-03"),
+    qualite:"HD"
+  })<-[:APHOTO]-(p2);
+
+// --- RELATIONS AGENCE -> PROPRIÉTÉ ---
+MATCH (ag1:Agence {id:"AG001"}), (p1:Propriete {id:"PROP001"})
+CREATE (ag1)-[:GERE {date_depot: date("2025-11-01")}]->(p1);
+
+MATCH (ag1:Agence {id:"AG001"}), (p2:Propriete {id:"PROP002"})
+CREATE (ag1)-[:GERE {date_depot: date("2025-11-10")}]->(p2);
+
+MATCH (ag2:Agence {id:"AG002"}), (p3:Propriete {id:"PROP003"})
+CREATE (ag2)-[:GERE {date_depot: date("2025-10-20")}]->(p3);
+
+MATCH (ag2:Agence {id:"AG002"}), (p4:Propriete {id:"PROP004"})
+CREATE (ag2)-[:GERE {date_depot: date("2025-09-15")}]->(p4);
+
+// --- RELATIONS DANS_QUARTIER ---
+MATCH (p1:Propriete {id:"PROP001"}), (loc:Localisation {id:"LOC_AIN_DIAB"})
+CREATE (p1)-[:DANSQUARTIER {prix_m2_local: 21000}]->(loc);
+
+MATCH (p2:Propriete {id:"PROP002"}), (loc:Localisation {id:"LOC_AIN_DIAB"})
+CREATE (p2)-[:DANSQUARTIER {prix_m2_local: 19500}]->(loc);
+
+MATCH (p3:Propriete {id:"PROP003"}), (loc:Localisation {id:"LOC_GAUTHIER"})
+CREATE (p3)-[:DANSQUARTIER {prix_m2_local: 18500}]->(loc);
+
+MATCH (p4:Propriete {id:"PROP004"}), (loc:Localisation {id:"LOC_RABAT_AGDAL"})
+CREATE (p4)-[:DANSQUARTIER {prix_m2_local: 17500}]->(loc);
+
+// --- AMÉNAGEMENTS DES PROPRIÉTÉS ---
+MATCH (p1:Propriete {id:"PROP001"}), (pis:Amenagement {id:"AM_PISCINE"}), (gar:Amenagement {id:"AM_GARAGE"})
+CREATE (p1)-[:POSSEDE_AMENAGEMENT]->(pis),
+       (p1)-[:POSSEDE_AMENAGEMENT]->(gar);
+
+MATCH (p2:Propriete {id:"PROP002"}), (gar:Amenagement {id:"AM_GARAGE"})
+CREATE (p2)-[:POSSEDE_AMENAGEMENT]->(gar);
+
+MATCH (p4:Propriete {id:"PROP004"}), (ter:Amenagement {id:"AM_TERRASSE"}), (gar:Amenagement {id:"AM_GARAGE"})
+CREATE (p4)-[:POSSEDE_AMENAGEMENT]->(ter),
+       (p4)-[:POSSEDE_AMENAGEMENT]->(gar);
+
+// --- INTERACTIONS UTILISATEURS ---
+MATCH (u1:User {id:"USER001"}), (p1:Propriete {id:"PROP001"}), (p2:Propriete {id:"PROP002"})
+CREATE (u1)-[:AIME {date_ajout: date("2025-12-01"), note: 5}]->(p1),
+       (u1)-[:AIME {date_ajout: date("2025-12-02"), note: 4}]->(p2);
+
+MATCH (u2:User {id:"USER002"}), (p3:Propriete {id:"PROP003"})
+CREATE (u2)-[:AIME {date_ajout: date("2025-12-03"), note: 4}]->(p3);
+
+MATCH (u1:User {id:"USER001"}), (p1:Propriete {id:"PROP001"})
+CREATE (u1)-[:DEMANDE_VISITE {
+  date_souhaitee: date("2025-12-10"),
+  heure: "14:30",
+  statut: "CONFIRMEE",
+  date_creation: date("2025-12-05"),
+  message: "Visite après-midi"
+}]->(p1);
+
+
+---------
+
+
+// Hash "secret123"
+WITH "$argon2id$v=19$m=65536,t=3,p=4$ibE2Zuzduzdm7P2/F6IUIg$TJvmoapqGF4geAwL5cIDKBCpIwQOSremznFMmxal/uo" AS pwd_hash
+
+MERGE (u1:User {id: "AGENT001"})
+ON CREATE SET 
+  u1.nom = "Dupont", 
+  u1.prenom = "Pierre", 
+  u1.email = "pierre@agence1.ma", 
+  u1.password = pwd_hash, 
+  u1.role = "AGENT", 
+  u1.budget = null, 
+  u1.surface_min = null,
+  u1.created_at = datetime()
+
+MERGE (u2:User {id: "AGENT002"})
+ON CREATE SET 
+  u2.nom = "Martin", 
+  u2.prenom = "Sophie", 
+  u2.email = "sophie@agence2.ma", 
+  u2.password = pwd_hash, 
+  u2.role = "AGENT", 
+  u2.budget = null, 
+  u2.surface_min = null,
+  u2.created_at = datetime()
+
+RETURN u1, u2;
+
+-------------------------------------------
+// Requête 1 : USER001
+WITH "$argon2id$v=19$m=65536,t=3,p=4$ibE2Zuzduzdm7P2/F6IUIg$TJvmoapqGF4geAwL5cIDKBCpIwQOSremznFMmxal/uo" AS default_pwd_hash
+MATCH (u:User {id: "USER001"})
+SET 
+  u.password = CASE WHEN u.password IS NULL THEN default_pwd_hash ELSE u.password END,
+  u.role = CASE WHEN u.role IS NULL THEN "ACHETEUR" ELSE u.role END,
+  u.created_at = CASE WHEN u.created_at IS NULL THEN datetime() ELSE u.created_at END
+RETURN u.id, u.email, u.role, u.created_at;
+
+// Requête 2 : USER002
+WITH "$argon2id$v=19$m=65536,t=3,p=4$ibE2Zuzduzdm7P2/F6IUIg$TJvmoapqGF4geAwL5cIDKBCpIwQOSremznFMmxal/uo" AS default_pwd_hash
+MATCH (u:User {id: "USER002"})
+SET 
+  u.password = CASE WHEN u.password IS NULL THEN default_pwd_hash ELSE u.password END,
+  u.role = CASE WHEN u.role IS NULL THEN "ACHETEUR" ELSE u.role END,
+  u.created_at = CASE WHEN u.created_at IS NULL THEN datetime() ELSE u.created_at END
+RETURN u.id, u.email, u.role, u.created_at;
+
+-------------------------------------------
+// --- NOUVELLES LOCALISATIONS ---
+CREATE
+(:Localisation {
+  id: "LOC_ANFA",
+  latitude: 33.577,
+  longitude: -7.631,
+  commune: "Casablanca",
+  region: "Casablanca-Settat",
+  prix_m2: 22000,
+  securite: "Élevée"
+}),
+(:Localisation {
+  id: "LOC_MAARIF",
+  latitude: 33.584,
+  longitude: -7.637,
+  commune: "Casablanca",
+  region: "Casablanca-Settat",
+  prix_m2: 16000,
+  securite: "Bonne"
+}),
+(:Localisation {
+  id: "LOC_BOURGOGNE",
+  latitude: 33.592,
+  longitude: -7.616,
+  commune: "Casablanca",
+  region: "Casablanca-Settat",
+  prix_m2: 19000,
+  securite: "Élevée"
+}),
+(:Localisation {
+  id: "LOC_HAY_RIAD",
+  latitude: 33.972,
+  longitude: -6.859,
+  commune: "Rabat",
+  region: "Rabat-Salé-Kénitra",
+  prix_m2: 16500,
+  securite: "Bonne"
+}),
+(:Localisation {
+  id: "LOC_SOUISSI",
+  latitude: 33.993,
+  longitude: -6.860,
+  commune: "Rabat",
+  region: "Rabat-Salé-Kénitra",
+  prix_m2: 18500,
+  securite: "Élevée"
+});
+
+// --- NOUVEAUX AMÉNAGEMENTS ---
+CREATE
+(:Amenagement {id:"AM_JARDIN", type:"Jardin", qualite:"Haute"}),
+(:Amenagement {id:"AM_BALCON", type:"Balcon", qualite:"Standard"}),
+(:Amenagement {id:"AM_PARKING", type:"Parking privé", qualite:"Haute"}),
+(:Amenagement {id:"AM_CONCIERGE", type:"Concierge", qualite:"Standard"});
+
+// --- NOUVELLE AGENCE ---
+CREATE
+(:Agence {
+  id: "AG003",
+  nom: "Rabat Prestige",
+  telephone: "+212537789012",
+  email: "contact@rabat-prestige.ma",
+  adresse: "88 Avenue Mohammed V, Rabat"
+});
+
+// --- 11 NOUVELLES PROPRIÉTÉS ---
+CREATE
+(:Propriete {
+  id: "PROP005",
+  titre: "Penthouse luxueux Anfa",
+  description: "Penthouse avec terrasse panoramique et finitions haut de gamme.",
+  prix: 4500000,
+  surface: 320,
+  chambres: 5,
+  adresse: "Boulevard d'Anfa",
+  geo: [33.577, -7.631]
+}),
+(:Propriete {
+  id: "PROP006",
+  titre: "Studio moderne Maarif",
+  description: "Studio meublé idéal pour étudiant ou jeune professionnel.",
+  prix: 650000,
+  surface: 45,
+  chambres: 1,
+  adresse: "Rue Fquih El Gabbas, Maarif",
+  geo: [33.584, -7.637]
+}),
+(:Propriete {
+  id: "PROP007",
+  titre: "Appartement familial Bourgogne",
+  description: "Appartement spacieux avec balcon dans résidence sécurisée.",
+  prix: 2200000,
+  surface: 160,
+  chambres: 3,
+  adresse: "Rue de Bourgogne",
+  geo: [33.592, -7.616]
+}),
+(:Propriete {
+  id: "PROP008",
+  titre: "Villa contemporaine Ain Diab",
+  description: "Villa architecturale avec piscine chauffée et spa.",
+  prix: 5200000,
+  surface: 380,
+  chambres: 6,
+  adresse: "Boulevard de l'Océan Atlantique",
+  geo: [33.595, -7.667]
+}),
+(:Propriete {
+  id: "PROP009",
+  titre: "Duplex lumineux Gauthier",
+  description: "Duplex avec double séjour et terrasse privée.",
+  prix: 1950000,
+  surface: 140,
+  chambres: 3,
+  adresse: "Rue Colonel Médioni",
+  geo: [33.594, -7.632]
+}),
+(:Propriete {
+  id: "PROP010",
+  titre: "Villa avec jardin Hay Riad",
+  description: "Villa moderne avec grand jardin paysager à Rabat.",
+  prix: 3100000,
+  surface: 280,
+  chambres: 5,
+  adresse: "Avenue Annakhil, Hay Riad",
+  geo: [33.972, -6.859]
+}),
+(:Propriete {
+  id: "PROP011",
+  titre: "Appartement standing Souissi",
+  description: "Appartement de prestige dans quartier diplomatique.",
+  prix: 2800000,
+  surface: 200,
+  chambres: 4,
+  adresse: "Avenue Imam Malik, Souissi",
+  geo: [33.993, -6.860]
+}),
+(:Propriete {
+  id: "PROP012",
+  titre: "Riad rénové Médina",
+  description: "Riad traditionnel entièrement rénové avec patio.",
+  prix: 1600000,
+  surface: 180,
+  chambres: 4,
+  adresse: "Derb Sidi Bouloukate",
+  geo: [33.594, -7.603]
+}),
+(:Propriete {
+  id: "PROP013",
+  titre: "Loft industriel Bourgogne",
+  description: "Loft atypique avec hauteur sous plafond exceptionnelle.",
+  prix: 1450000,
+  surface: 110,
+  chambres: 2,
+  adresse: "Rue Léon l'Africain",
+  geo: [33.591, -7.617]
+}),
+(:Propriete {
+  id: "PROP014",
+  titre: "Villa pied dans l'eau",
+  description: "Villa d'exception avec accès direct à la plage.",
+  prix: 8500000,
+  surface: 450,
+  chambres: 7,
+  adresse: "Corniche Ain Diab",
+  geo: [33.573, -7.590]
+}),
+(:Propriete {
+  id: "PROP015",
+  titre: "Appartement neuf Agdal",
+  description: "Appartement dans résidence neuve avec équipements modernes.",
+  prix: 1750000,
+  surface: 120,
+  chambres: 3,
+  adresse: "Avenue des Nations Unies",
+  geo: [34.005, -6.848]
+});
+
+// --- PHOTOS DES NOUVELLES PROPRIÉTÉS ---
+MATCH (p5:Propriete {id:"PROP005"})
+CREATE
+  (:Photo {id:"P005_1", url:"https://picsum.photos/seed/prop005-1/800/600", angle:"Terrasse", date_upload: date("2025-11-15"), qualite:"HD"})<-[:APHOTO]-(p5),
+  (:Photo {id:"P005_2", url:"https://picsum.photos/seed/prop005-2/800/600", angle:"Salon", date_upload: date("2025-11-15"), qualite:"HD"})<-[:APHOTO]-(p5);
+
+MATCH (p6:Propriete {id:"PROP006"})
+CREATE (:Photo {id:"P006_1", url:"https://picsum.photos/seed/prop006-1/800/600", angle:"Interieur", date_upload: date("2025-11-20"), qualite:"HD"})<-[:APHOTO]-(p6);
+
+MATCH (p7:Propriete {id:"PROP007"})
+CREATE
+  (:Photo {id:"P007_1", url:"https://picsum.photos/seed/prop007-1/800/600", angle:"Facade", date_upload: date("2025-10-25"), qualite:"HD"})<-[:APHOTO]-(p7),
+  (:Photo {id:"P007_2", url:"https://picsum.photos/seed/prop007-2/800/600", angle:"Balcon", date_upload: date("2025-10-25"), qualite:"HD"})<-[:APHOTO]-(p7);
+
+MATCH (p8:Propriete {id:"PROP008"})
+CREATE
+  (:Photo {id:"P008_1", url:"https://picsum.photos/seed/prop008-1/800/600", angle:"Piscine", date_upload: date("2025-11-25"), qualite:"HD"})<-[:APHOTO]-(p8),
+  (:Photo {id:"P008_2", url:"https://picsum.photos/seed/prop008-2/800/600", angle:"Facade", date_upload: date("2025-11-25"), qualite:"HD"})<-[:APHOTO]-(p8);
+
+MATCH (p9:Propriete {id:"PROP009"})
+CREATE (:Photo {id:"P009_1", url:"https://picsum.photos/seed/prop009-1/800/600", angle:"Sejour", date_upload: date("2025-10-30"), qualite:"HD"})<-[:APHOTO]-(p9);
+
+MATCH (p10:Propriete {id:"PROP010"})
+CREATE
+  (:Photo {id:"P010_1", url:"https://picsum.photos/seed/prop010-1/800/600", angle:"Jardin", date_upload: date("2025-11-05"), qualite:"HD"})<-[:APHOTO]-(p10),
+  (:Photo {id:"P010_2", url:"https://picsum.photos/seed/prop010-2/800/600", angle:"Facade", date_upload: date("2025-11-05"), qualite:"HD"})<-[:APHOTO]-(p10);
+
+MATCH (p11:Propriete {id:"PROP011"})
+CREATE (:Photo {id:"P011_1", url:"https://picsum.photos/seed/prop011-1/800/600", angle:"Salon", date_upload: date("2025-09-20"), qualite:"HD"})<-[:APHOTO]-(p11);
+
+MATCH (p12:Propriete {id:"PROP012"})
+CREATE
+  (:Photo {id:"P012_1", url:"https://picsum.photos/seed/prop012-1/800/600", angle:"Patio", date_upload: date("2025-10-15"), qualite:"HD"})<-[:APHOTO]-(p12),
+  (:Photo {id:"P012_2", url:"https://picsum.photos/seed/prop012-2/800/600", angle:"Interieur", date_upload: date("2025-10-15"), qualite:"HD"})<-[:APHOTO]-(p12);
+
+MATCH (p13:Propriete {id:"PROP013"})
+CREATE (:Photo {id:"P013_1", url:"https://picsum.photos/seed/prop013-1/800/600", angle:"Interieur", date_upload: date("2025-11-12"), qualite:"HD"})<-[:APHOTO]-(p13);
+
+MATCH (p14:Propriete {id:"PROP014"})
+CREATE
+  (:Photo {id:"P014_1", url:"https://picsum.photos/seed/prop014-1/800/600", angle:"Vue mer", date_upload: date("2025-11-28"), qualite:"HD"})<-[:APHOTO]-(p14),
+  (:Photo {id:"P014_2", url:"https://picsum.photos/seed/prop014-2/800/600", angle:"Facade", date_upload: date("2025-11-28"), qualite:"HD"})<-[:APHOTO]-(p14),
+  (:Photo {id:"P014_3", url:"https://picsum.photos/seed/prop014-3/800/600", angle:"Piscine", date_upload: date("2025-11-28"), qualite:"HD"})<-[:APHOTO]-(p14);
+
+MATCH (p15:Propriete {id:"PROP015"})
+CREATE (:Photo {id:"P015_1", url:"https://picsum.photos/seed/prop015-1/800/600", angle:"Salon", date_upload: date("2025-09-25"), qualite:"HD"})<-[:APHOTO]-(p15);
+
+// --- RELATIONS AGENCE -> NOUVELLES PROPRIÉTÉS ---
+MATCH (ag1:Agence {id:"AG001"}), (p:Propriete)
+WHERE p.id IN ["PROP005", "PROP007", "PROP008", "PROP014"]
+CREATE (ag1)-[:GERE {date_depot: date("2025-11-15")}]->(p);
+
+MATCH (ag2:Agence {id:"AG002"}), (p:Propriete)
+WHERE p.id IN ["PROP006", "PROP009", "PROP012", "PROP013"]
+CREATE (ag2)-[:GERE {date_depot: date("2025-10-20")}]->(p);
+
+MATCH (ag3:Agence {id:"AG003"}), (p:Propriete)
+WHERE p.id IN ["PROP010", "PROP011", "PROP015"]
+CREATE (ag3)-[:GERE {date_depot: date("2025-09-10")}]->(p);
+
+// --- RELATIONS DANSQUARTIER ---
+MATCH (p5:Propriete {id:"PROP005"}), (loc:Localisation {id:"LOC_ANFA"})
+CREATE (p5)-[:DANSQUARTIER {prix_m2_local: 22500}]->(loc);
+
+MATCH (p6:Propriete {id:"PROP006"}), (loc:Localisation {id:"LOC_MAARIF"})
+CREATE (p6)-[:DANSQUARTIER {prix_m2_local: 16200}]->(loc);
+
+MATCH (p7:Propriete {id:"PROP007"}), (loc:Localisation {id:"LOC_BOURGOGNE"})
+CREATE (p7)-[:DANSQUARTIER {prix_m2_local: 19200}]->(loc);
+
+MATCH (p8:Propriete {id:"PROP008"}), (loc:Localisation {id:"LOC_AIN_DIAB"})
+CREATE (p8)-[:DANSQUARTIER {prix_m2_local: 20500}]->(loc);
+
+MATCH (p9:Propriete {id:"PROP009"}), (loc:Localisation {id:"LOC_GAUTHIER"})
+CREATE (p9)-[:DANSQUARTIER {prix_m2_local: 18200}]->(loc);
+
+MATCH (p10:Propriete {id:"PROP010"}), (loc:Localisation {id:"LOC_HAY_RIAD"})
+CREATE (p10)-[:DANSQUARTIER {prix_m2_local: 16800}]->(loc);
+
+MATCH (p11:Propriete {id:"PROP011"}), (loc:Localisation {id:"LOC_SOUISSI"})
+CREATE (p11)-[:DANSQUARTIER {prix_m2_local: 18700}]->(loc);
+
+MATCH (p12:Propriete {id:"PROP012"}), (loc:Localisation {id:"LOC_GAUTHIER"})
+CREATE (p12)-[:DANSQUARTIER {prix_m2_local: 17900}]->(loc);
+
+MATCH (p13:Propriete {id:"PROP013"}), (loc:Localisation {id:"LOC_BOURGOGNE"})
+CREATE (p13)-[:DANSQUARTIER {prix_m2_local: 19000}]->(loc);
+
+MATCH (p14:Propriete {id:"PROP014"}), (loc:Localisation {id:"LOC_AIN_DIAB"})
+CREATE (p14)-[:DANSQUARTIER {prix_m2_local: 21500}]->(loc);
+
+MATCH (p15:Propriete {id:"PROP015"}), (loc:Localisation {id:"LOC_RABAT_AGDAL"})
+CREATE (p15)-[:DANSQUARTIER {prix_m2_local: 17200}]->(loc);
+
+// --- AMÉNAGEMENTS DES NOUVELLES PROPRIÉTÉS ---
+MATCH (p5:Propriete {id:"PROP005"}), (ter:Amenagement {id:"AM_TERRASSE"}), (park:Amenagement {id:"AM_PARKING"})
+CREATE (p5)-[:POSSEDE_AMENAGEMENT]->(ter), (p5)-[:POSSEDE_AMENAGEMENT]->(park);
+
+MATCH (p6:Propriete {id:"PROP006"}), (bal:Amenagement {id:"AM_BALCON"})
+CREATE (p6)-[:POSSEDE_AMENAGEMENT]->(bal);
+
+MATCH (p7:Propriete {id:"PROP007"}), (bal:Amenagement {id:"AM_BALCON"}), (gar:Amenagement {id:"AM_GARAGE"}), (conc:Amenagement {id:"AM_CONCIERGE"})
+CREATE (p7)-[:POSSEDE_AMENAGEMENT]->(bal), (p7)-[:POSSEDE_AMENAGEMENT]->(gar), (p7)-[:POSSEDE_AMENAGEMENT]->(conc);
+
+MATCH (p8:Propriete {id:"PROP008"}), (pis:Amenagement {id:"AM_PISCINE"}), (gar:Amenagement {id:"AM_GARAGE"}), (jard:Amenagement {id:"AM_JARDIN"})
+CREATE (p8)-[:POSSEDE_AMENAGEMENT]->(pis), (p8)-[:POSSEDE_AMENAGEMENT]->(gar), (p8)-[:POSSEDE_AMENAGEMENT]->(jard);
+
+MATCH (p9:Propriete {id:"PROP009"}), (ter:Amenagement {id:"AM_TERRASSE"}), (park:Amenagement {id:"AM_PARKING"})
+CREATE (p9)-[:POSSEDE_AMENAGEMENT]->(ter), (p9)-[:POSSEDE_AMENAGEMENT]->(park);
+
+MATCH (p10:Propriete {id:"PROP010"}), (jard:Amenagement {id:"AM_JARDIN"}), (gar:Amenagement {id:"AM_GARAGE"}), (ter:Amenagement {id:"AM_TERRASSE"})
+CREATE (p10)-[:POSSEDE_AMENAGEMENT]->(jard), (p10)-[:POSSEDE_AMENAGEMENT]->(gar), (p10)-[:POSSEDE_AMENAGEMENT]->(ter);
+
+MATCH (p11:Propriete {id:"PROP011"}), (park:Amenagement {id:"AM_PARKING"}), (conc:Amenagement {id:"AM_CONCIERGE"})
+CREATE (p11)-[:POSSEDE_AMENAGEMENT]->(park), (p11)-[:POSSEDE_AMENAGEMENT]->(conc);
+
+MATCH (p12:Propriete {id:"PROP012"}), (ter:Amenagement {id:"AM_TERRASSE"})
+CREATE (p12)-[:POSSEDE_AMENAGEMENT]->(ter);
+
+MATCH (p13:Propriete {id:"PROP013"}), (bal:Amenagement {id:"AM_BALCON"})
+CREATE (p13)-[:POSSEDE_AMENAGEMENT]->(bal);
+
+MATCH (p14:Propriete {id:"PROP014"}), (pis:Amenagement {id:"AM_PISCINE"}), (jard:Amenagement {id:"AM_JARDIN"}), (gar:Amenagement {id:"AM_GARAGE"}), (ter:Amenagement {id:"AM_TERRASSE"})
+CREATE (p14)-[:POSSEDE_AMENAGEMENT]->(pis), (p14)-[:POSSEDE_AMENAGEMENT]->(jard), (p14)-[:POSSEDE_AMENAGEMENT]->(gar), (p14)-[:POSSEDE_AMENAGEMENT]->(ter);
+
+MATCH (p15:Propriete {id:"PROP015"}), (gar:Amenagement {id:"AM_GARAGE"}), (conc:Amenagement {id:"AM_CONCIERGE"})
+CREATE (p15)-[:POSSEDE_AMENAGEMENT]->(gar), (p15)-[:POSSEDE_AMENAGEMENT]->(conc);
+
+// --- NOUVELLES INTERACTIONS UTILISATEURS ---
+MATCH (u1:User {id:"USER001"}), (p5:Propriete {id:"PROP005"}), (p8:Propriete {id:"PROP008"})
+CREATE (u1)-[:AIME {date_ajout: date("2025-12-04"), note: 5}]->(p5),
+       (u1)-[:AIME {date_ajout: date("2025-12-05"), note: 5}]->(p8);
+
+MATCH (u2:User {id:"USER002"}), (p6:Propriete {id:"PROP006"}), (p9:Propriete {id:"PROP009"})
+CREATE (u2)-[:AIME {date_ajout: date("2025-12-04"), note: 4}]->(p6),
+       (u2)-[:AIME {date_ajout: date("2025-12-06"), note: 4}]->(p9);
+
+MATCH (u1:User {id:"USER001"}), (p10:Propriete {id:"PROP010"})
+CREATE (u1)-[:DEMANDE_VISITE {
+  date_souhaitee: date("2025-12-15"),
+  heure: "10:00",
+  statut: "EN_ATTENTE",
+  date_creation: date("2025-12-08"),
+  message: "Visite weekend si possible"
+}]->(p10);
+-------------------------------------------
+// SUPPRIMER anciennes PROCHE_DE (pour recréer proprement)
+MATCH ()-[r:PROCHE_DE]->() DELETE r;
+
+// RECRÉER PROCHE_DE < 5km
+MATCH (p1:Propriete), (p2:Propriete)
+WHERE id(p1) < id(p2) 
+  AND p1.geo IS NOT NULL AND size(p1.geo) = 2 
+  AND p2.geo IS NOT NULL AND size(p2.geo) = 2
+WITH p1, p2, 
+  round(point.distance(
+    point({latitude: p1.geo[0], longitude: p1.geo[1]}),
+    point({latitude: p2.geo[0], longitude: p2.geo[1]})
+  ) / 1000, 2) AS distance_km
+WHERE distance_km <= 2.0  // ← 5km au lieu de 10
+CREATE (p1)-[:PROCHE_DE {distanceKm: distance_km}]->(p2)
+RETURN count(*) AS nb_proche_de_5km;
+
+
+// Version SIMPLE : équipements IDENTIQUES exacts
+MATCH (p1:Propriete)-[:POSSEDE_AMENAGEMENT]->(a1),
+      (p2:Propriete)-[:POSSEDE_AMENAGEMENT]->(a2:Amenagement)
+WHERE id(p1) < id(p2) 
+  AND a1.type = a2.type  // MÊME type équipement
+  AND COUNT { (p1)-[:POSSEDE_AMENAGEMENT]->() } >= 1 
+  AND COUNT { (p2)-[:POSSEDE_AMENAGEMENT]->() } >= 1
+WITH p1, p2, 
+  // Score = proportion équipements communs
+  toFloat(count(DISTINCT a1)) / 
+  (COUNT { (p1)-[:POSSEDE_AMENAGEMENT]->() } + COUNT { (p2)-[:POSSEDE_AMENAGEMENT]->() }) * 2 AS score
+WHERE score >= 0.5
+MERGE (p1)-[s:SIMILAIRE_PAR_AMENAGEMENT]->(p2)
+SET s.scoreAmenagement = round(score, 3)
+RETURN count(DISTINCT s) AS nb_similaire_amenagement;
+
+
+// 1. Graph projet (OK)
+CALL gds.graph.project(
+  'recommandations-final',
+  'Propriete',
+  {
+    PROCHE_DE: {properties: 'distanceKm'},
+    SIMILAIRE_PAR_AMENAGEMENT: {properties: 'scoreAmenagement'},
+    DANSQUARTIER: {orientation: 'REVERSE'},
+    POSSEDE_AMENAGEMENT: {}
+  },
+  {nodeProperties: ['prix', 'surface', 'chambres']}
+);
+// 2. KNN correct sans similarityMetric
+CALL gds.knn.write('recommandations-final', {
+  nodeLabels: ['Propriete'],
+  relationshipTypes: ['*'],
+  nodeProperties: ['prix', 'surface', 'chambres'],
+  topK: 4,
+  similarityCutoff: 0.3,
+  writeRelationshipType: 'SIMILAIRE_A',
+  writeProperty: 'scoreSimilarite'
+});
+CALL gds.graph.drop('recommandations-final');
+MATCH (p1:Propriete)-[s:SIMILAIRE_A]->(p2:Propriete)
+WHERE id(p1) < id(p2)
+RETURN 
+  p1.id AS prop1, p1.titre AS titre1,
+  p2.id AS prop2, p2.titre AS titre2,
+  round(s.scoreSimilarite, 3) AS score_similaire_a,
+  // Distance explicite
+  [(p1)-[d:PROCHE_DE]->(p2) | d.distanceKm][0] AS distanceKm,
+  // Amenagement explicite  
+  [(p1)-[a:SIMILAIRE_PAR_AMENAGEMENT]->(p2) | a.scoreAmenagement][0] AS scoreAmenagement
+ORDER BY s.scoreSimilarite DESC
+LIMIT 15;
+
+
+// 1. Projet graphe (SIMILAIRE_A + PROCHE_DE + SIMILAIRE_PAR_AMENAGEMENT)
+CALL gds.graph.project(
+  'proprietes-pr',
+  'Propriete',
+  ['SIMILAIRE_A', 'PROCHE_DE', 'SIMILAIRE_PAR_AMENAGEMENT'],
+  {relationshipProperties: ['scoreSimilarite', 'distanceKm', 'scoreAmenagement']}
+);
+
+// 2. PageRank (propriétés "populaires/influentes")
+CALL gds.pageRank.write('proprietes-pr', {
+  maxIterations: 20,
+  dampingFactor: 0.85,
+  writeProperty: 'pageRank'
+});
+
+// 3. Nettoyer
+CALL gds.graph.drop('proprietes-pr');
+
+// 4. Vérifier (top 5 propriétés influentes)
+MATCH (p:Propriete)
+RETURN p.id, p.titre, p.pageRank
+ORDER BY p.pageRank DESC
+LIMIT 5;
+-------------------------------------------
+En cas de nouvelle donnees :
+// ============ 1. PROCHE_DE (toutes paires <2km) ============
+MATCH (p1:Propriete {geo: null}) DETACH DELETE p1;  // Nettoyer geo null
+MATCH (p1:Propriete)-[r:PROCHE_DE]->(p2) DELETE r; // Reset ancien
+
+MATCH (p1:Propriete), (p2:Propriete)
+WHERE id(p1) < id(p2) AND size(p1.geo)=2 AND size(p2.geo)=2
+WITH p1, p2, round(point.distance(
+  point({latitude: p1.geo[0], longitude: p1.geo[1]}),
+  point({latitude: p2.geo[0], longitude: p2.geo[1]})
+)/1000, 2) AS dist
+WHERE dist <= 2
+CREATE (p1)-[:PROCHE_DE {distanceKm: dist}]->(p2);
+
+RETURN 'PROCHE_DE OK (' + count(*) + ' relations)';
+
+// ============ 2. SIMILAIRE_PAR_AMENAGEMENT ============
+MATCH (p1:Propriete)-[r:SIMILAIRE_PAR_AMENAGEMENT]->(p2) DELETE r;
+
+MATCH (p1:Propriete)-[:POSSEDE_AMENAGEMENT]->(a1:Amenagement),
+      (p2:Propriete)-[:POSSEDE_AMENAGEMENT]->(a2:Amenagement)
+WHERE id(p1) < id(p2)
+WITH p1, p2, 
+  size([t IN apoc.coll.intersection(
+    collect(DISTINCT a1.type), collect(DISTINCT a2.type)
+  ) | t]) * 1.0 / 
+  size(apoc.coll.union(
+    collect(DISTINCT a1.type), collect(DISTINCT a2.type)
+  )) AS score
+WHERE score >= 0.5
+CREATE (p1)-[:SIMILAIRE_PAR_AMENAGEMENT {scoreAmenagement: round(score, 3)}]->(p2);
+
+RETURN 'SIMILAIRE_PAR_AMENAGEMENT OK';
+
+// ============ 3. SIMILAIRE_A + PageRank GDS ============
+CALL gds.graph.drop('reco-full', false);
+CALL gds.graph.project('reco-full', 'Propriete', 
+  ['PROCHE_DE','SIMILAIRE_PAR_AMENAGEMENT','DANSQUARTIER'],
+  {nodeProperties:['prix','surface','chambres']});
+
+MATCH (p1:Propriete)-[r:SIMILAIRE_A]->(p2) DELETE r;
+CALL gds.knn.write('reco-full', {
+  topK:5, similarityCutoff:0.3,
+  writeRelationshipType:'SIMILAIRE_A', writeProperty:'scoreSimilarite'
+});
+
+CALL gds.pageRank.write('reco-full', {maxIterations:20, writeProperty:'pageRank'});
+CALL gds.graph.drop('reco-full');
+
+RETURN 'Graphe recommandations complet !';
+
+------------------------------------------
+MATCH (a:Agence {nom: "Immobilier Premium"})
+SET a.id = "AGENT002"
+RETURN a.id, a.nom;
+
+MATCH (a:Agence {nom: "Casablanca Immo"})
+SET a.id = "AGENT002"
+RETURN a.id, a.nom;
+
+MATCH (a:Agence {nom: "Rabat Prestige"})
+SET a.id = "AGENT002"
+RETURN a.id, a.nom;
+-----------------------------------------
+
+-----------------------------------------
+

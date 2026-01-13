@@ -1,0 +1,473 @@
+query {
+  proprietesMap {
+    id
+    titre
+    prix
+    adresse
+    description
+    surface
+    chambres
+    lat
+    lon
+  }
+}
+
+-----------------------------
+query ProprietesFiltrees($prixMin: Float, $prixMax: Float, $surfaceMin: Int) {
+  proprietesFiltrees(
+    prixMin: $prixMin
+    prixMax: $prixMax
+    surfaceMin: $surfaceMin
+  ) {
+    id
+    titre
+    prix
+    adresse
+    lat
+    lon
+    surface
+    chambres
+  }
+}
+
+
+
+{
+  "prixMin": 500000,
+  "prixMax": 2000000,
+  "surfaceMin": 80
+}
+
+query {
+  proprietesFiltrees(amenagementTypes: ["Piscine"]) {
+    id
+    titre
+    adresse
+  }
+}
+
+query {
+  proprietesFiltrees(chambresMin: 3) {
+    id
+    titre
+    chambres
+  }
+}
+----------------------------
+query ProprieteComplete($id: String!) {
+  proprieteDetail(id: $id) {
+    # Propriété principale
+    id
+    titre
+    prix
+    adresse
+    description
+    surface
+    chambres
+    lat
+    lon
+
+    # Photos (avec angle)
+    photos {
+      url
+      angle
+    }
+
+    # Aménagements complets
+    amenagements {
+      id
+      type
+      qualite
+    }
+
+    # Localisation complète
+    localisation {
+      id
+      commune
+      region
+      prixM2
+      securite
+    }
+
+    # Agence complète
+    agence {
+      id
+      nom
+      adresse
+      email
+      telephone
+    }
+
+    # Champs des relations
+    dateDepot
+    prixM2Local
+  }
+}
+
+{"id": "PROP001"}
+----------------------------
+query {
+  rechercheLocalisation(quartierId: "LOC_AIN_DIAB") {
+    id
+    titre
+  }
+}
+
+
+query {
+  rechercheLocalisation(commune: "Casablanca") {
+    id
+    titre
+    adresse
+  }
+}
+
+query {
+  rechercheLocalisation(lat: 33.595, lon: -7.667, rayonKm: 5) {
+    id
+    titre
+    prix
+  }
+}
+--------------------------
+query TestTriPrix {
+  proprietesTriees(tri: PRIX, ordre: ASC, limit: 5) {
+    id
+    titre
+    prix
+    adresse
+  }
+}
+
+query TestTriPrix {
+  proprietesTriees(tri: PRIX, ordre: DESC, limit: 5) {
+    id
+    titre
+    prix
+    adresse
+  }
+}
+
+query {
+  proprietesTriees(tri: DATE_DEPOT, ordre: ASC, limit: 5) {
+    id
+    titre
+    prix
+    dateDepot  
+  }
+}
+
+query TestPertinence {
+  proprietesTriees(tri: PERTINENCE, ordre: DESC, limit: 5) {
+    id titre prix
+  }
+}
+
+----------------------------------
+mutation {
+  register(input: {
+    nom: "Dupont",
+    prenom: "Jean",
+    email: "jean@graphimmo.com",
+    password: "secret123456",
+    budget: 2000000,
+    surfaceMin: 100  
+  })
+}
+
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZWFuQGdyYXBoaW1tby5jb20iLCJleHAiOjE3NjgxODYwNDZ9.yE26K_3DEUNyAJpWBtb6E6-FM91IVThCq3x8CmKQ2to"
+
+mutation {
+  register(input: {
+    nom: "Ait Lahcen",
+    prenom: "Achraf",
+    email: "achraf@emsi.ma",
+    password: "P@ssw0rd",
+    budget: 5000000,
+    surfaceMin: 80  
+  })
+}
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2hyYWZAZW1zaS5tYSIsImV4cCI6MTc2ODIxNDMzM30.R690cPVSwuEAHuZk_wySStR6GZN1LNo8fw_ACZBxJwE"
+
+
+query {
+  utilisateurs(limit: 20) {
+    id
+    nom
+    prenom
+    email
+    role
+    createdAt
+    budget
+    surfaceMin
+    preferencesLocation
+    villePrefs
+  }
+}
+
+query {
+  utilisateurs(role: "AGENT", limit: 20) {
+    id
+    nom
+    prenom
+    email
+    role
+    createdAt
+    budget
+    surfaceMin
+    preferencesLocation
+    villePrefs
+  }
+}
+
+query {
+  utilisateurs(role: "ACHETEUR", limit: 20) {
+    id
+    nom
+    prenom
+    email
+    role
+    createdAt
+    budget
+    surfaceMin
+    preferencesLocation
+    villePrefs
+  }
+}
+
+
+mutation {
+  updateProfil(
+    input: {preferencesLocation: "Casablanca Maarif"}, 
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2hyYWZAZW1zaS5tYSIsImV4cCI6MTc2ODIxNDMzM30.R690cPVSwuEAHuZk_wySStR6GZN1LNo8fw_ACZBxJwE"
+  ) {
+    preferencesLocation
+  }
+}
+
+
+mutation {
+  login(email: "achraf@emsi.ma", password: "P@ssw0rd") 
+}
+
+----------------------------------------
+query {
+  estFavori(proprieteId: "PROP001", token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0QGdyYXBoaW1tby5jb20iLCJ1c2VyX2lkIjoiVVNFUjc3MCIsImV4cCI6MTc2ODc1MjU4MX0.NwfaeW4nBtRoJp0U2yXOGi9qp1QB2Og9VLQosORjLO8")
+}
+
+mutation {
+  ajouterFavori(proprieteId: "PROP001", token: "VOTRE_TOKEN", note: "Super appartement!")
+}
+
+mutation {
+  retirerFavori(proprieteId: "PROP001", token: "VOTRE_TOKEN")
+}
+
+# Cliquer détails → AUTO crée visite !
+query {
+  proprieteDetail(id: "PROP001", token: "VOTRE_TOKEN") {
+    id titre prix photos { url angle }
+    localisation { commune prixM2 }
+  }
+}
+
+query {
+  dashboardPersonnel(token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0QGdyYXBoaW1tby5jb20iLCJ1c2VyX2lkIjoiVVNFUjc3MCIsImV4cCI6MTc2ODc1MjU4MX0.NwfaeW4nBtRoJp0U2yXOGi9qp1QB2Og9VLQosORjLO8") {
+    nbFavoris nbVisites
+    favoris { proprieteId }
+    visites { id dateVisite }
+  }
+}
+
+mutation {
+  marquerVisite(
+    proprieteId: "PROP002", 
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0QGdyYXBoaW1tby5jb20iLCJ1c2VyX2lkIjoiVVNFUjc3MCIsImV4cCI6MTc2ODc1MjU4MX0.NwfaeW4nBtRoJp0U2yXOGi9qp1QB2Og9VLQosORjLO8",
+    impression: "Belle vue mer",
+    prixPropose: 1800000
+  )
+}
+----------------------------------
+query {
+  recommandations(token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2hyYWZiZW5hZ3JpMjhAZ21haWwuY29tIiwidXNlcl9pZCI6IlVTRVI3NTgiLCJleHAiOjE3Njg3Nzc0MTV9.EQDB8DCRFhz5C0asZcU2PZ0D_0zOKud4_eE3cKHG_Z4", input: {limit: 12, minScore: 90}) {
+    id
+    titre
+    prix
+    adresse
+    surface
+    chambres
+    score
+    source
+    distanceKm
+  }
+}
+
+query {
+  recommandations(token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2hyYWZiZW5hZ3JpMjhAZ21haWwuY29tIiwidXNlcl9pZCI6IlVTRVI3NTgiLCJleHAiOjE3Njg3Nzc0MTV9.EQDB8DCRFhz5C0asZcU2PZ0D_0zOKud4_eE3cKHG_Z4") {
+    id
+    titre
+    prix
+    adresse
+    surface
+    chambres
+    score
+    source
+    distanceKm
+  }
+}
+----------------------------------
+query TestComparaison {
+  comparaisonProprietes(input: {
+    proprieteIds: ["PROP001", "PROP002", "PROP003"]
+  }) {
+    proprietes {
+      id
+      titre
+      prix
+      prixM2
+      surface
+      chambres
+      adresse
+      localisation
+      amenagements {
+        type
+        qualite
+      }
+      photos 
+    }
+    similaires {
+      id
+      titre
+      prix
+      score
+      source
+      distanceKm
+    }
+  }
+}
+--------------------------------------
+query {
+  proprietesCompletes(ids: ["PROP001", "PROP003", "PROP010"]) {
+    id
+    titre
+    adresse
+    chambres
+    surface
+    description
+    prix
+    photos {
+      url
+      angle
+    }
+    amenagements {
+      id
+      type
+      qualite
+    }
+    localisation {
+      id
+      commune
+      prixM2
+    }
+    agence {
+      nom
+      email
+    }
+    dateDepot
+    prixM2Local
+  }
+}
+------------------------------------
+query {
+  topProprietesCompletes {
+    id
+    titre
+    adresse
+    chambres
+    surface
+    description
+    prix
+    photos {
+      url
+      angle
+    }
+    amenagements {
+      id
+      type
+      qualite
+    }
+    localisation {
+      id
+      commune
+      prixM2
+    }
+    agence {
+      nom
+      email
+    }
+    dateDepot
+    prixM2Local
+  }
+}
+
+query {
+  topProprietesCompletes(limit:15) {
+    id
+    titre
+    adresse
+    chambres
+    surface
+    description
+    prix
+    photos {
+      url
+      angle
+    }
+    amenagements {
+      id
+      type
+      qualite
+    }
+    localisation {
+      id
+      commune
+      prixM2
+    }
+    agence {
+      nom
+      email
+    }
+    dateDepot
+    prixM2Local
+  }
+}
+--------------------------------
+mutation {
+  login(email: "sophie@agence2.ma", password: "secret123") 
+}
+
+query TestDashboardAgent {
+  dashboardAgent(token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzb3BoaWVAYWdlbmNlMi5tYSIsInVzZXJfaWQiOiJBR0VOVDAwMiIsImV4cCI6MTc2ODg1Njc3NH0.KqqteKKtdKTFSj8biOh-h1JbAEVF4xy8JPvYooqBRhk") {  
+    totalProprietes
+    prixMoyenProprietes
+    totalVisites
+    totalFavoris
+    
+    statsMarche {
+      prixMoyen
+      prixMedian
+      nbProprietes
+      tendancePrix7j
+    }
+    
+    performances {
+      id
+      titre
+      prix
+      nbVisites
+      nbFavoris
+    }
+  }
+}
+-------------------------------------------
+
