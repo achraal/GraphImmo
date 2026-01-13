@@ -470,4 +470,112 @@ query TestDashboardAgent {
   }
 }
 -------------------------------------------
+# mutation {
+#   login(email: "achrafbenagri28@gmail.com", password: "secret123456")
+# }
 
+mutation {
+  creerDemandeVisite(
+    input: {
+      proprieteId: "PROP006",
+      dateSouhaitee: "2026-01-25",
+      heure: "15:00",
+      message: "Visite pour famille 4 pers, intéressé piscine"
+    },
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2hyYWZiZW5hZ3JpMjhAZ21haWwuY29tIiwidXNlcl9pZCI6IlVTRVI3NTgiLCJleHAiOjE3Njg5MDE3NDV9.mPXU58vYW3IQ2rorbKVfeY3FV-kyD3tr-nrf2hp7Gfk"
+  )
+}
+
+query HistoriqueDemandes {
+  historiqueDemandes(token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2hyYWZiZW5hZ3JpMjhAZ21haWwuY29tIiwidXNlcl9pZCI6IlVTRVI3NTgiLCJleHAiOjE3Njg5MDE3NDV9.mPXU58vYW3IQ2rorbKVfeY3FV-kyD3tr-nrf2hp7Gfk") {
+    demandes {
+      id
+      dateSouhaitee
+      heure
+      statut
+      dateCreation
+      message
+      proprieteId
+      proprieteTitre
+    }
+    nbDemandes
+  }
+}
+
+query {
+  notificationsAgent(token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzb3BoaWVAYWdlbmNlMi5tYSIsInVzZXJfaWQiOiJBR0VOVDAwMiIsImV4cCI6MTc2ODkxMDE5MH0.KuaIgBtZH5N_DP1hqkGboO_yWZnNssuDzfM5onKs1s4") {
+    notifications {
+      id
+      type
+      date
+      lu
+      message
+      proprieteId
+      proprieteTitre
+      userId
+      userNom
+      demandeid
+      dateSouhaitee
+      heure
+    }
+    nbNonLues
+  }
+}
+
+mutation {
+  updateStatutDemande(
+    demandeid: "DV-PROP010-VILLA-AVEC-JARDIN-HA-20260220"
+    statut: ACCEPTEE
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzb3BoaWVAYWdlbmNlMi5tYSIsInVzZXJfaWQiOiJBR0VOVDAwMiIsImV4cCI6MTc2ODkxMzA5NH0.6y43LOkaMh5VHkG1ShPvli4RWdhGcdBLzg91cw6hcnw"
+  )
+}
+
+query HistoriqueDemandesAgent {
+  historiqueDemandesAgent(
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzb3BoaWVAYWdlbmNlMi5tYSIsInVzZXJfaWQiOiJBR0VOVDAwMiIsImV4cCI6MTc2ODkxMzA5NH0.6y43LOkaMh5VHkG1ShPvli4RWdhGcdBLzg91cw6hcnw"
+  ) {
+    demandes {
+      id
+      dateSouhaitee
+      proprieteId
+      heure
+      statut
+      dateCreation
+      message
+      proprieteTitre
+    }
+  }
+}
+
+query NotificationsUser {
+  notificationsUser(
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2hyYWZiZW5hZ3JpMjhAZ21haWwuY29tIiwidXNlcl9pZCI6IlVTRVI3NTgiLCJleHAiOjE3Njg5MzgzNTh9.cz-XkltwD46jE0MAKE0f2jOqG_njYCciTAvbx7laiG4"
+  ) {
+    notifications {
+      id
+      type
+      date
+      lu
+      message
+      proprieteId
+      proprieteTitre
+      agentNom
+      demandeid
+      nouveauStatut
+    }
+    nbNonLues
+  }
+}
+
+mutation MarquerNotificationLue {
+  marquerNotificationLue(
+    notificationId: "NOTIF-UPD-DV-PROP006-STUDIO-MODERNE-MAARI-20260125-20260113-190845"
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2hyYWZiZW5hZ3JpMjhAZ21haWwuY29tIiwidXNlcl9pZCI6IlVTRVI3NTgiLCJleHAiOjE3Njg5MzgzNTh9.cz-XkltwD46jE0MAKE0f2jOqG_njYCciTAvbx7laiG4"
+  )
+}
+
+mutation MarquerToutesNotificationsLues {
+  marquerToutesNotificationsLues(
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlbGphem91bHlAZW1zaS5tYSIsInVzZXJfaWQiOiJVU0VSMDEyIiwiZXhwIjoxNzY4OTM4NzA4fQ.D6XwWHAts0uxMccroH9CVBtvccz2HI-oCoDYEQtB3Ss"
+  )
+}
