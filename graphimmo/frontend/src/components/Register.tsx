@@ -25,7 +25,7 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault()
   try {
-    const { data } = await register({  // ✅ Récupère data
+    const { data } = await register({  // Récupère data
       variables: {
         input: {
           nom: formData.nom,
@@ -33,15 +33,15 @@ export default function Register() {
           email: formData.email,
           password: formData.password,
           budget: formData.budget ? parseFloat(formData.budget) : null,
-          preferencesLocation: formData.preferencesLocation || null,  // ✅ Corrige nom
+          preferencesLocation: formData.preferencesLocation || null,  // Corrige nom
           surfaceMin: null,
           villePrefs: null
         }
       }
     })
     
-    localStorage.setItem('token', data.register)  // ✅ Sauvegarde token
-    localStorage.setItem('userEmail', formData.email)  // ✅ Sauvegarde email
+    localStorage.setItem('token', data.register)  // Sauvegarde token
+    localStorage.setItem('userEmail', formData.email)  // Sauvegarde email
     navigate('/login')
   } catch (err: any) {
     console.error(err)

@@ -310,13 +310,59 @@ export default function ProprieteDetail() {
       {/* En-tête */}
       <h1 style={{ color: '#1e3a8a', marginBottom: '16px' }}>{prop.titre}</h1>
       
-      {/* Infos principales */}
-      <div style={{ 
-        background: '#f8fafc', 
-        padding: '20px', 
-        borderRadius: '12px', 
-        marginBottom: '24px' 
+      {/* AJOUTER L'ID ICI */}
+    <div style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: '12px', 
+      marginBottom: '16px',
+      padding: '12px',
+      background: '#f0f9ff',
+      borderRadius: '8px',
+      border: '1px solid #bae6fd'
+    }}>
+      <span style={{ 
+        fontWeight: 600, 
+        color: '#0369a1',
+        fontSize: '14px'
       }}>
+        🏷️ ID : <code style={{ 
+          background: '#e0f2fe', 
+          padding: '4px 8px', 
+          borderRadius: '4px',
+          fontFamily: 'monospace',
+          fontSize: '15px',
+          color: '#075985',
+          userSelect: 'all'  // Permet de sélectionner facilement
+        }}>{prop.id}</code>
+      </span>
+      <button
+        onClick={() => {
+          navigator.clipboard.writeText(prop.id)
+          alert('ID copié dans le presse-papier !')
+        }}
+        style={{
+          padding: '6px 12px',
+          background: '#0ea5e9',
+          color: 'white',
+          border: 'none',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          fontSize: '13px',
+          fontWeight: 500
+        }}
+      >
+        📋 Copier
+      </button>
+    </div>
+    
+    {/* Infos principales */}
+    <div style={{ 
+      background: '#f8fafc', 
+      padding: '20px', 
+      borderRadius: '12px', 
+      marginBottom: '24px' 
+    }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
           <div><strong>Prix :</strong> {prop.prix.toLocaleString('fr-MA')} MAD</div>
           <div><strong>Surface :</strong> {prop.surface} m²</div>

@@ -1,4 +1,5 @@
-@startuml GraphImmo_Composants_Stylise_Fixe
+@startuml GraphImmo_Composants_Stylise_UseCaseStyle
+!theme plain
 skinparam backgroundColor #F8F9FA
 skinparam componentStyle rectangle
 skinparam linetype ortho
@@ -10,9 +11,8 @@ skinparam componentFontColor Black
 skinparam cloudFontColor Black
 skinparam databaseFontColor Black
 skinparam noteFontColor DarkSlateGray
+
 skinparam component {
-  BackgroundColor<<frontend>> #BBDEFB
-  BorderColor<<frontend>> #1565C0
   BackgroundColor<<react>> #C8E6C9
   BackgroundColor<<apollo>> #FFF9C4
   BackgroundColor<<leaflet>> #FFCCBC
@@ -21,38 +21,50 @@ skinparam component {
   BackgroundColor<<fastapi>> #E0F2F1
   BackgroundColor<<pydantic>> #F3E5F5
   BackgroundColor<<neo4j>> #DCEDC8
+  BorderColor #1976D2
   FontSize 11
   FontStyle bold
 }
-skinparam cloudBackgroundColor #BBDEFB
-skinparam cloudBorderColor #1565C0
-skinparam databaseBackgroundColor #DCEDC8
+
+skinparam cloud {
+  BackgroundColor #E3F2FD
+  BorderColor #1976D2
+}
+
+skinparam node {
+  BackgroundColor #FFF3E0
+  BorderColor #F57C00
+}
+
+skinparam database {
+  BackgroundColor #DCEDC8
+  BorderColor #1976D2
+}
+
 skinparam nodesep 60
-skinparam Shadowing 2
+skinparam ranksep 50
 
 title GraphImmo - Architecture
 
 left to right direction
 
+cloud "Frontend\n(localhost:5173)" as frontend {
+  component "Navigateur" as client
+  component "React/TS\nVite" <<react>> as react
+  component "Apollo Client" <<apollo>> as apollo
+  component "Leaflet\nCarte Geo" <<leaflet>> as leaflet
+}
 
-  cloud "Frontend\n(localhost:5173)" <<frontend>> as frontend {
-    component "Navigateur" as client #E3F2FD
-    component "React/TS\nVite" <<react>> as react
-    component "Apollo Client" <<apollo>> as apollo
-    component "Leaflet\nCarte Geo" <<leaflet>> as leaflet
-  }
+node "Backend FastAPI\n(localhost:8000)" as backend {
+  component "Strawberry\nGraphQL" <<graphql>> as graphql
+  component "FastAPI App\nCORS/JWT" <<fastapi>> as fastapi
+  component "Pydantic\nValidation" <<pydantic>> as pydantic
+}
 
-  node "Backend FastAPI\n(localhost:8000)" <<backend>> as backend {
-    component "Strawberry\nGraphQL" <<graphql>> as graphql
-    component "FastAPI App\nCORS/JWT" as fastapi
-    component "Pydantic\nValidation" <<pydantic>> as pydantic
-  }
-
-  database "Neo4j\n(localhost:7687)" <<neo4j>> as neo4j {
-    [Graphe 9 nœuds\n13 relations] as graph
-    component "GDS Library\nPageRank/Similarité" as gds #AED581
-  }
-
+database "Neo4j\n(localhost:7687)" as neo4j {
+  [Graphe 9 nœuds\n13 relations] as graph
+  component "GDS Library\nPageRank/Similarité" as gds
+}
 
 client -down-> react : HTTP GraphQL
 react -down-> apollo
@@ -63,7 +75,15 @@ fastapi -down-> pydantic
 pydantic -right-> graph : bolt:// Cypher
 graph -down-> gds : Algos recos
 
-note bottom of frontend #E8F5E8 : Build Vite → CDN\nCache Apollo
-note right of neo4j #C8E6C9 : User -AIME→ Propriete\nAgence -GERE→ Propriete\np -SIMILAIRE_A→ p
+note bottom of frontend
+  Build Vite → CDN
+  Cache Apollo
+end note
+
+note right of neo4j
+  User -AIME→ Propriete
+  Agence -GERE→ Propriete
+  p -SIMILAIRE_A→ p
+end note
 
 @enduml

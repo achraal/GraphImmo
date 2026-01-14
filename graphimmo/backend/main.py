@@ -242,6 +242,78 @@ class StatsAgent:
     statsMarche: StatsMarche
     performances: list[PerformancePropriete]
 
+@strawberry.enum
+class StatutVisite(str, Enum):
+    EN_ATTENTE = "en_attente"
+    ACCEPTEE = "acceptee"
+    REFUSEE = "refusee"
+
+@strawberry.type
+class DemandeVisite:
+    id: str  # f"DV{secrets.token_hex(8).upper()}"
+    date_souhaitee: str  # "2026-01-20"
+    propriete_id: str
+    heure: str  # "14:00"
+    statut: StatutVisite
+    date_creation: str
+    message: Optional[str]
+    propriete_titre: str
+
+@strawberry.input
+class DemandeVisiteInput:
+    propriete_id: str
+    date_souhaitee: str
+    heure: str
+    message: Optional[str]
+    propriete_titre: Optional[str] = None
+
+@strawberry.type
+class HistoriqueDemandes:
+    demandes: List[DemandeVisite]
+    nb_demandes: int
+
+
+@strawberry.type
+class NotificationAgent:
+    id: str
+    type: str
+    date: str
+    lu: bool
+    message: str
+    propriete_id: str
+    propriete_titre: str
+    user_id: str
+    user_nom: str
+    demandeid: str
+    date_souhaitee: str
+    heure: str
+
+@strawberry.type
+class NotificationsAgent:
+    notifications: List[NotificationAgent]
+    nb_non_lues: int
+
+@strawberry.type
+class HistoriqueDemandesAgent:
+    demandes: List[DemandeVisite]
+
+@strawberry.type
+class NotificationUser:
+    id: str
+    type: str
+    date: str
+    lu: bool
+    message: str
+    propriete_id: str
+    propriete_titre: str
+    agent_nom: str
+    demandeid: str
+    nouveau_statut: str
+
+@strawberry.type
+class NotificationsUser:
+    notifications: List[NotificationUser]
+    nb_non_lues: int
 
 @strawberry.type
 class Query:
@@ -1118,7 +1190,6 @@ class Query:
                     marche_res = {'nb_proprietes': 0, 'prix_moyen': 0, 'prix_median': 0, 'tendance_prix_7j': 0}
 
                 # 4. Performances (liste vide si 0)
-                # 4. Performances (liste vide si 0)
                 perfs_res = session.run("""
                     MATCH (a:Agence {id: $agent_id})-[:GERE]->(p:Propriete)
                     OPTIONAL MATCH (vis:User)-[:A_VISITE]->(:Visite)-[:CONCERNE]->(p)
@@ -1163,11 +1234,353 @@ class Query:
         except Exception as e:
             print(f"DEBUG ERROR: {str(e)}")  # Console
             raise HTTPException(500, f"Dashboard: {str(e)}")
+    @strawberry.field
+    def historique_demandes(self, token: str) -> Optional[HistoriqueDemandes]:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_email = payload['sub']
+            
+            with driver.session() as session:
+                # 1. Récup user ID + DEBUG
+                user_res = session.run(
+                    "MATCH (u:User {email: $email}) RETURN u.id AS userid, u.email AS email",
+                    email=user_email
+                ).single()
+                
+                if not user_res:
+                    print(f"User not found for email: {user_email}")  # DEBUG
+                    return None
+                    
+                userid = user_res['userid']
+                print(f"User found: {userid} for email: {user_res['email']}")  # DEBUG
+                
+                # 2. Vérifier les relations existantes
+                debug_res = session.run(
+                    "MATCH (u:User {id: $userid})-[r:DEMANDE_VISITE]->(p:Propriete) "
+                    "RETURN count(r) AS count, collect(r.id) AS demande_ids",
+                    userid=userid
+                ).single()
+                
+                print(f"Found {debug_res['count']} demandes: {debug_res['demande_ids']}")  # DEBUG
+                
+                if debug_res['count'] == 0:
+                    return HistoriqueDemandes(demandes=[], nbdemandes=0)
+                
+                # 3. Récup historique
+                result = session.run("""
+                    MATCH (u:User {id: $userid})-[r:DEMANDE_VISITE]->(p:Propriete)
+                    RETURN 
+                        r.id AS id,
+                        r.datesouhaitee AS datesouhaitee,
+                        r.heure AS heure,
+                        r.statut AS statut,
+                        r.datecreation AS datecreation,
+                        r.message AS message,
+                        p.id AS proprieteid,
+                        p.titre AS propriete_titre
+                    ORDER BY r.datecreation DESC
+                    LIMIT 50
+                """, userid=userid)
+                
+                demandes = []
+                for record in result:
+                    demandes.append(DemandeVisite(
+                        id=record['id'],
+                        date_souhaitee=record['datesouhaitee'],
+                        propriete_id=record['proprieteid'],
+                        heure=record['heure'],
+                        statut=StatutVisite(record['statut']),
+                        date_creation=record['datecreation'],
+                        message=record['message'],
+                        propriete_titre=record['propriete_titre']
+                    ))
+                
+                return HistoriqueDemandes(
+                    demandes=demandes,
+                    nb_demandes=len(demandes)
+                )
+        except JWTError:
+            return None
+        except Exception as e:
+            print(f"Error in historique_demandes: {e}")  # DEBUG
+            return None
 
-
-
-
-
+    # @strawberry.field
+    # def notifications_agent(self, token: str) -> Optional[NotificationsAgent]:
+    #     try:
+    #         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    #         agent_email = payload['sub']
+            
+    #         with driver.session() as session:
+    #             # 1. Récupérer l'ID de l'agent (qui est aussi l'ID de son agence)
+    #             agent_res = session.run("""
+    #                 MATCH (u:User {email: $email, role: 'AGENT'})
+    #                 RETURN u.id AS agent_id
+    #             """, email=agent_email).single()
+                
+    #             if not agent_res:
+    #                 print(f"Agent not found: {agent_email}")
+    #                 return NotificationsAgent(notifications=[], nb_non_lues=0)
+                
+    #             agent_id = agent_res['agent_id']  # "AGENT002"
+    #             print(f"Agent ID (also Agence ID): {agent_id}")
+                
+    #             # 2. Récupérer notifications avec l'ID lisible
+    #             result = session.run("""
+    #                 MATCH (n:Notification)-[:POUR_AGENT]->(a:Agence {id: $agent_id})
+    #                 OPTIONAL MATCH (u2:User {id: n.user_id})
+    #                 RETURN 
+    #                     n.id AS id,
+    #                     n.type AS type,
+    #                     toString(n.date) AS date,
+    #                     n.lu AS lu,
+    #                     n.message AS message,
+    #                     n.propriete_id AS propriete_id,
+    #                     n.propriete_titre AS propriete_titre,
+    #                     n.user_id AS user_id,
+    #                     COALESCE(u2.nom + ' ' + u2.prenom, n.user_nom, 'Utilisateur inconnu') AS user_nom,
+    #                     n.demandeid AS demandeid,
+    #                     n.date_souhaitee AS date_souhaitee,
+    #                     n.heure AS heure
+    #                 ORDER BY n.date DESC
+    #                 LIMIT 50
+    #             """, agent_id=agent_id)
+                
+    #             notifications = []
+    #             for record in result:
+    #                 notifications.append(NotificationAgent(
+    #                     id=record['id'],
+    #                     type=record['type'],
+    #                     date=record['date'],
+    #                     lu=record['lu'],
+    #                     message=record['message'],
+    #                     propriete_id=record['propriete_id'],
+    #                     propriete_titre=record['propriete_titre'],
+    #                     user_id=record['user_id'],
+    #                     user_nom=record['user_nom'],
+    #                     demandeid=record['demandeid'],
+    #                     date_souhaitee=record['date_souhaitee'],
+    #                     heure=record['heure']
+    #                 ))
+                
+    #             nb_non_lues = len([n for n in notifications if not n.lu])
+                
+    #             print(f"Found {len(notifications)} notifications, {nb_non_lues} unread")
+                
+    #             return NotificationsAgent(
+    #                 notifications=notifications,
+    #                 nb_non_lues=nb_non_lues
+    #             )
+                
+    #     except JWTError as e:
+    #         print(f"JWT Error: {e}")
+    #         return None
+    #     except Exception as e:
+    #         print(f"Error in notifications_agent: {e}")
+    #         import traceback
+    #         traceback.print_exc()
+    #         return NotificationsAgent(notifications=[], nb_non_lues=0)
+    @strawberry.field
+    def notifications_agent(self, token: str) -> Optional[NotificationsAgent]:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            agent_email = payload['sub']
+            
+            with driver.session() as session:
+                # 1. Récupérer l'ID de l'agent (qui est aussi l'ID de son agence)
+                agent_res = session.run("""
+                    MATCH (u:User {email: $email, role: 'AGENT'})
+                    RETURN u.id AS agent_id
+                """, email=agent_email).single()
+                
+                if not agent_res:
+                    print(f"Agent not found: {agent_email}")
+                    return NotificationsAgent(notifications=[], nb_non_lues=0)
+                
+                agent_id = agent_res['agent_id']
+                print(f"Agent ID (also Agence ID): {agent_id}")
+                
+                # 2. Récupérer UNIQUEMENT les notifications avec statut EN_ATTENTE
+                result = session.run("""
+                    MATCH (n:Notification)-[:POUR_AGENT]->(a:Agence {id: $agent_id})
+                    MATCH (u:User)-[r:DEMANDE_VISITE {id: n.demandeid}]->(p:Propriete)
+                    WHERE r.statut = 'en_attente'
+                    OPTIONAL MATCH (u2:User {id: n.user_id})
+                    RETURN 
+                        n.id AS id,
+                        n.type AS type,
+                        toString(n.date) AS date,
+                        n.lu AS lu,
+                        n.message AS message,
+                        n.propriete_id AS propriete_id,
+                        n.propriete_titre AS propriete_titre,
+                        n.user_id AS user_id,
+                        COALESCE(u2.nom + ' ' + u2.prenom, n.user_nom, 'Utilisateur inconnu') AS user_nom,
+                        n.demandeid AS demandeid,
+                        n.date_souhaitee AS date_souhaitee,
+                        n.heure AS heure
+                    ORDER BY n.date DESC
+                    LIMIT 50
+                """, agent_id=agent_id)
+                
+                notifications = []
+                for record in result:
+                    notifications.append(NotificationAgent(
+                        id=record['id'],
+                        type=record['type'],
+                        date=record['date'],
+                        lu=record['lu'],
+                        message=record['message'],
+                        propriete_id=record['propriete_id'],
+                        propriete_titre=record['propriete_titre'],
+                        user_id=record['user_id'],
+                        user_nom=record['user_nom'],
+                        demandeid=record['demandeid'],
+                        date_souhaitee=record['date_souhaitee'],
+                        heure=record['heure']
+                    ))
+                
+                nb_non_lues = len([n for n in notifications if not n.lu])
+                
+                print(f"Found {len(notifications)} notifications EN_ATTENTE, {nb_non_lues} unread")
+                
+                return NotificationsAgent(
+                    notifications=notifications,
+                    nb_non_lues=nb_non_lues
+                )
+                
+        except JWTError as e:
+            print(f"JWT Error: {e}")
+            return None
+        except Exception as e:
+            print(f"Error in notifications_agent: {e}")
+            import traceback
+            traceback.print_exc()
+            return NotificationsAgent(notifications=[], nb_non_lues=0)
+    @strawberry.field
+    def historique_demandes_agent(self, token: str) -> Optional[HistoriqueDemandesAgent]:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            agent_email = payload['sub']
+            
+            with driver.session() as session:
+                # Récupérer agent_id
+                agent_res = session.run("""
+                    MATCH (u:User {email: $email, role: 'AGENT'})
+                    RETURN u.id AS agent_id
+                """, email=agent_email).single()
+                
+                if not agent_res:
+                    return None
+                
+                agent_id = agent_res['agent_id']
+                
+                # Récupérer TOUTES les demandes (acceptées, refusées, en attente)
+                result = session.run("""
+                    MATCH (a:Agence {id: $agent_id})-[:GERE]->(p:Propriete)
+                        <-[d:DEMANDE_VISITE]-(u:User)
+                    RETURN 
+                        d.id AS id,
+                        d.datesouhaitee AS datesouhaitee,
+                        p.id AS proprieteid,
+                        d.heure AS heure,
+                        d.statut AS statut,
+                        d.datecreation AS datecreation,
+                        d.message AS message,
+                        p.titre AS propriete_titre,
+                        u.nom + ' ' + u.prenom AS user_nom
+                    ORDER BY d.datecreation DESC
+                    LIMIT 100
+                """, agent_id=agent_id)
+                
+                demandes = []
+                for record in result:
+                    demandes.append(DemandeVisite(
+                        id=record['id'],
+                        date_souhaitee=record['datesouhaitee'],
+                        propriete_id=record['proprieteid'],
+                        heure=record['heure'],
+                        statut=StatutVisite(record['statut']),
+                        date_creation=str(record['datecreation']),
+                        message=record['message'],
+                        propriete_titre=record['propriete_titre']
+                    ))
+                
+                return HistoriqueDemandesAgent(demandes=demandes)
+                
+        except Exception as e:
+            print(f"Error: {e}")
+            return None
+    @strawberry.field
+    def notifications_user(self, token: str) -> Optional[NotificationsUser]:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_email = payload['sub']
+            
+            with driver.session() as session:
+                # Récupérer user_id
+                user_res = session.run("""
+                    MATCH (u:User {email: $email})
+                    RETURN u.id AS user_id
+                """, email=user_email).single()
+                
+                if not user_res:
+                    print(f"User not found: {user_email}")
+                    return NotificationsUser(notifications=[], nb_non_lues=0)
+                
+                user_id = user_res['user_id']
+                print(f"User ID: {user_id}")
+                
+                # Récupérer les notifications user
+                result = session.run("""
+                    MATCH (n:Notification)-[:POUR_USER]->(u:User {id: $user_id})
+                    RETURN 
+                        n.id AS id,
+                        n.type AS type,
+                        toString(n.date) AS date,
+                        n.lu AS lu,
+                        n.message AS message,
+                        n.propriete_id AS propriete_id,
+                        n.propriete_titre AS propriete_titre,
+                        n.agent_nom AS agent_nom,
+                        n.demandeid AS demandeid,
+                        n.nouveau_statut AS nouveau_statut
+                    ORDER BY n.date DESC
+                    LIMIT 50
+                """, user_id=user_id)
+                
+                notifications = []
+                for record in result:
+                    notifications.append(NotificationUser(
+                        id=record['id'],
+                        type=record['type'],
+                        date=record['date'],
+                        lu=record['lu'],
+                        message=record['message'],
+                        propriete_id=record['propriete_id'],
+                        propriete_titre=record['propriete_titre'],
+                        agent_nom=record['agent_nom'],
+                        demandeid=record['demandeid'],
+                        nouveau_statut=record['nouveau_statut']
+                    ))
+                
+                nb_non_lues = len([n for n in notifications if not n.lu])
+                
+                print(f"Found {len(notifications)} notifications, {nb_non_lues} unread")
+                
+                return NotificationsUser(
+                    notifications=notifications,
+                    nb_non_lues=nb_non_lues
+                )
+                
+        except JWTError as e:
+            print(f"JWT Error: {e}")
+            return None
+        except Exception as e:
+            print(f"Error in notifications_user: {e}")
+            import traceback
+            traceback.print_exc()
+            return NotificationsUser(notifications=[], nb_non_lues=0)
 
 
 
@@ -1196,7 +1609,6 @@ class Mutation:
                 ville_prefs=getattr(input, 'ville_prefs', []) or None)
             
             return create_access_token({"sub": input.email})
-    
     @strawberry.mutation
     def update_profil(self, input: UserUpdateInput, token: str) -> User:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -1256,7 +1668,6 @@ class Mutation:
                 
                 return result.single()["created"]
         except JWTError: raise HTTPException(401, "Token invalide")
-
     @strawberry.mutation
     def retirer_favori(self, propriete_id: str, token: str) -> bool:
         try:
@@ -1275,7 +1686,6 @@ class Mutation:
                 
                 return result.single()["deleted"]
         except JWTError: raise HTTPException(401, "Token invalide")
-
     @strawberry.mutation
     def marquer_visite(self, propriete_id: str, token: str, impression: Optional[str] = None, prix_propose: Optional[float] = None) -> bool:
         """Crée (:Visite) + A_VISITE + CONCERNE"""
@@ -1305,6 +1715,315 @@ class Mutation:
                 
                 return result.single()["created"]
         except JWTError: raise HTTPException(401, "Token invalide")
+    @strawberry.mutation
+    def creer_demande_visite(self, input: DemandeVisiteInput, token: str) -> bool:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_email = payload['sub']
+        
+        with driver.session() as session:
+            user_res = session.run(
+                "MATCH (u:User {email: $email}) RETURN u.id AS userid", 
+                email=user_email
+            ).single()
+            
+            if not user_res: 
+                raise HTTPException(404, "User introuvable")
+            
+            userid = user_res['userid']
+            
+            # Récupérer titre propriété
+            prop_res = session.run("""
+                MATCH (p:Propriete {id: $propid})
+                RETURN p.titre AS titre, p.id AS propid
+            """, propid=input.propriete_id).single()
+            
+            if not prop_res: 
+                raise HTTPException(404, "Propriété introuvable")
+            
+            # Créer demande_id
+            prop_titre = prop_res['titre'].replace(' ', '-').replace('/', '-').upper()[:20]
+            date_suffix = input.date_souhaitee.replace('-', '')
+            demande_id = f"DV-{prop_res['propid']}-{prop_titre}-{date_suffix}"
+            
+            # Vérifier unicité
+            existing = session.run(
+                "MATCH ()-[r:DEMANDE_VISITE {id: $demandeid}]->() RETURN count(r) AS cnt", 
+                demandeid=demande_id
+            ).single()
+            
+            if existing['cnt'] > 0: 
+                raise HTTPException(409, "Demande existe déjà")
+            
+            # MERGE relation
+            session.run("""
+                MATCH (u:User {id: $userid}), (p:Propriete {id: $propid})
+                MERGE (u)-[r:DEMANDE_VISITE {id: $demandeid}]->(p)
+                ON CREATE SET 
+                    r.datesouhaitee = $datesouhaitee, 
+                    r.heure = $heure, 
+                    r.statut = 'en_attente', 
+                    r.datecreation = datetime(), 
+                    r.message = $message
+                RETURN r
+            """, userid=userid, propid=input.propriete_id, demandeid=demande_id,
+                datesouhaitee=input.date_souhaitee, heure=input.heure, 
+                message=input.message)
+            
+            # Notification avec ID lisible
+            user_nom_res = session.run(
+                "MATCH (u:User {id: $userid}) RETURN u.nom + ' ' + u.prenom AS user_nom", 
+                userid=userid
+            ).single()
+            user_nom = user_nom_res['user_nom'] or 'Anonyme'
+            
+            # Générer timestamp pour ID unique
+            from datetime import datetime
+            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            notif_id = f"NOTIF-NDV-{demande_id}-{timestamp}"
+
+            session.run("""
+                MATCH (p:Propriete {id: $propid})<-[:GERE]-(a:Agence),
+                    (u:User {id: $userid})
+                CREATE (n:Notification {
+                    id: $notif_id,
+                    type: 'nouvelle_demande_visite',
+                    date: datetime(),
+                    lu: false,
+                    message: $message,
+                    propriete_id: $propid,
+                    propriete_titre: $proptitre,
+                    user_id: $userid,
+                    user_nom: $usernom,
+                    demandeid: $demandeid,
+                    date_souhaitee: $datesouhaitee,
+                    heure: $heure
+                })-[:POUR_AGENT]->(a)
+            """, notif_id=notif_id, propid=input.propriete_id, 
+                proptitre=prop_res['titre'], userid=userid, usernom=user_nom, 
+                demandeid=demande_id, datesouhaitee=input.date_souhaitee, 
+                heure=input.heure,
+                message=f"Demande {demande_id} pour {prop_res['titre']}")
+
+        return True         
+    # @strawberry.mutation
+    # def update_statut_demande(self, demandeid: str, statut: StatutVisite, token: str) -> bool:
+    #     try:
+    #         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    #         agent_email = payload['sub']
+            
+    #         with driver.session() as session:
+    #             # 1. Récupérer l'ID de l'agent (= ID de son agence)
+    #             agent_res = session.run("""
+    #                 MATCH (u:User {email: $email, role: 'AGENT'})
+    #                 RETURN u.id AS agent_id
+    #             """, email=agent_email).single()
+                
+    #             if not agent_res:
+    #                 raise HTTPException(403, "Agent non autorisé")
+                
+    #             agent_id = agent_res['agent_id']
+    #             print(f"Agent {agent_id} updating demande {demandeid}")
+                
+    #             # 2. Vérifier autorisation + update statut
+    #             res = session.run("""
+    #                 MATCH (a:Agence {id: $agent_id})-[:GERE]->(p:Propriete)
+    #                     <-[r:DEMANDE_VISITE {id: $demandeid}]-(u:User)
+    #                 SET r.statut = $statut
+    #                 RETURN count(r) AS updated, u.id AS user_id, 
+    #                     p.id AS prop_id, p.titre AS prop_titre
+    #             """, agent_id=agent_id, demandeid=demandeid, 
+    #                 statut=statut.value).single()
+                
+    #             if res['updated'] == 0:
+    #                 raise HTTPException(404, "Demande introuvable ou non autorisée pour votre agence")
+                
+    #             # 3. Créer notification pour l'utilisateur avec ID lisible
+    #             from datetime import datetime
+    #             timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    #             notif_id = f"NOTIF-UPD-{demandeid}-{timestamp}"
+                
+    #             user_id = res['user_id']
+    #             session.run("""
+    #                 MATCH (agent:User {id: $agent_id}),
+    #                     (u:User {id: $user_id})
+    #                 CREATE (n:Notification {
+    #                     id: $notif_id,
+    #                     type: 'update_demande_visite',
+    #                     date: datetime(),
+    #                     lu: false,
+    #                     message: $message,
+    #                     propriete_id: $prop_id,
+    #                     propriete_titre: $prop_titre,
+    #                     demandeid: $demandeid,
+    #                     agent_nom: agent.nom + ' ' + COALESCE(agent.prenom, ''),
+    #                     nouveau_statut: $statut
+    #                 })-[:POUR_USER]->(u)
+    #             """, notif_id=notif_id, agent_id=agent_id, user_id=user_id,
+    #                 prop_id=res['prop_id'], prop_titre=res['prop_titre'],
+    #                 demandeid=demandeid,
+    #                 message=f"Votre demande {demandeid} est maintenant '{statut.value}'",
+    #                 statut=statut.value)
+                
+    #             print(f"Demande {demandeid} updated to {statut.value}, notification {notif_id} created")
+            
+    #         return True
+            
+    #     except JWTError:
+    #         raise HTTPException(401, "Token invalide")
+    #     except HTTPException:
+    #         raise
+    #     except Exception as e:
+    #         print(f"Error in update_statut_demande: {e}")
+    #         import traceback
+    #         traceback.print_exc()
+    #         raise HTTPException(500, "Erreur serveur")
+    @strawberry.mutation
+    def update_statut_demande(self, demandeid: str, statut: StatutVisite, token: str) -> bool:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            agent_email = payload['sub']
+            
+            with driver.session() as session:
+                # 1. Récupérer l'ID de l'agent (= ID de son agence)
+                agent_res = session.run("""
+                    MATCH (u:User {email: $email, role: 'AGENT'})
+                    RETURN u.id AS agent_id
+                """, email=agent_email).single()
+                
+                if not agent_res:
+                    raise HTTPException(403, "Agent non autorisé")
+                
+                agent_id = agent_res['agent_id']
+                print(f"Agent {agent_id} updating demande {demandeid}")
+                
+                # 2. Vérifier autorisation + update statut
+                res = session.run("""
+                    MATCH (a:Agence {id: $agent_id})-[:GERE]->(p:Propriete)
+                        <-[r:DEMANDE_VISITE {id: $demandeid}]-(u:User)
+                    SET r.statut = $statut
+                    RETURN count(r) AS updated, u.id AS user_id, 
+                        p.id AS prop_id, p.titre AS prop_titre
+                """, agent_id=agent_id, demandeid=demandeid, 
+                    statut=statut.value).single()
+                
+                if res['updated'] == 0:
+                    raise HTTPException(404, "Demande introuvable ou non autorisée pour votre agence")
+                
+                # 3. MARQUER LA NOTIFICATION AGENT COMME LUE (version simplifiée)
+                notif_update = session.run("""
+                    MATCH (n:Notification {demandeid: $demandeid, type: 'nouvelle_demande_visite'})
+                    SET n.lu = true
+                    RETURN count(n) AS updated
+                """, demandeid=demandeid).single()
+                
+                print(f"Notifications marked as read: {notif_update['updated']}")
+                
+                # 4. Créer notification pour l'utilisateur avec ID lisible
+                from datetime import datetime
+                timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+                notif_id = f"NOTIF-UPD-{demandeid}-{timestamp}"
+                
+                user_id = res['user_id']
+                session.run("""
+                    MATCH (agent:User {id: $agent_id}),
+                        (u:User {id: $user_id})
+                    CREATE (n:Notification {
+                        id: $notif_id,
+                        type: 'update_demande_visite',
+                        date: datetime(),
+                        lu: false,
+                        message: $message,
+                        propriete_id: $prop_id,
+                        propriete_titre: $prop_titre,
+                        demandeid: $demandeid,
+                        agent_nom: agent.nom + ' ' + COALESCE(agent.prenom, ''),
+                        nouveau_statut: $statut
+                    })-[:POUR_USER]->(u)
+                """, notif_id=notif_id, agent_id=agent_id, user_id=user_id,
+                    prop_id=res['prop_id'], prop_titre=res['prop_titre'],
+                    demandeid=demandeid,
+                    message=f"Votre demande {demandeid} est maintenant '{statut.value}'",
+                    statut=statut.value)
+                
+                print(f"Demande {demandeid} updated to {statut.value}, {notif_update['updated']} notification(s) marked as read")
+            
+            return True
+            
+        except JWTError:
+            raise HTTPException(401, "Token invalide")
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"Error in update_statut_demande: {e}")
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(500, "Erreur serveur")
+    # Mutation pour marquer comme lu
+    @strawberry.mutation
+    def marquer_notification_lue(self, notification_id: str, token: str) -> bool:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_email = payload['sub']
+            
+            with driver.session() as session:
+                # Récupérer user_id
+                user_res = session.run("""
+                    MATCH (u:User {email: $email})
+                    RETURN u.id AS user_id
+                """, email=user_email).single()
+                
+                if not user_res:
+                    return False
+                
+                user_id = user_res['user_id']
+                
+                # Marquer comme lu
+                result = session.run("""
+                    MATCH (n:Notification {id: $notif_id})-[:POUR_USER]->(u:User {id: $user_id})
+                    SET n.lu = true
+                    RETURN count(n) AS updated
+                """, notif_id=notification_id, user_id=user_id).single()
+                
+                print(f"Notification {notification_id} marked as read: {result['updated'] > 0}")
+                return result['updated'] > 0
+                
+        except Exception as e:
+            print(f"Error marking notification as read: {e}")
+            return False
+
+    # Mutation pour marquer TOUTES comme lues
+    @strawberry.mutation
+    def marquer_toutes_notifications_lues(self, token: str) -> bool:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_email = payload['sub']
+            
+            with driver.session() as session:
+                user_res = session.run("""
+                    MATCH (u:User {email: $email})
+                    RETURN u.id AS user_id
+                """, email=user_email).single()
+                
+                if not user_res:
+                    return False
+                
+                user_id = user_res['user_id']
+                
+                result = session.run("""
+                    MATCH (n:Notification)-[:POUR_USER]->(u:User {id: $user_id})
+                    WHERE n.lu = false
+                    SET n.lu = true
+                    RETURN count(n) AS updated
+                """, user_id=user_id).single()
+                
+                print(f"Marked {result['updated']} notifications as read")
+                return True
+                
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
+
+
 
 
 

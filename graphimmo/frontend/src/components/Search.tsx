@@ -348,7 +348,7 @@ export default function Search() {
     setTri('PERTINENCE'); setOrdre('DESC'); setLimit('20')
     setModeActif('aucun')
     
-    // ✅ AJOUTER CECI
+    
     setSearchState({
       modeActif: 'aucun',
       results: [],
@@ -360,7 +360,7 @@ export default function Search() {
   const loading = loadingLoc || loadingTri
   const error = errorLoc || errorTri
   
-  // ✅ MODIFIER CECI - Utiliser contexte en priorité
+  
   const results = searchState.results.length > 0 
     ? searchState.results 
     : modeActif === 'localisation' ? (dataLoc?.rechercheLocalisation ?? [])

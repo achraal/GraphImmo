@@ -373,11 +373,11 @@ const SOURCE_CONFIG = {
 export default function Recommendations() {
   const token = localStorage.getItem('token')
   
-  // ✅ États utilisés pour la requête (ne changent QUE au clic sur Actualiser)
+  // États utilisés pour la requête (ne changent QUE au clic sur Actualiser)
   const [limit, setLimit] = useState(12)
   const [minScore, setMinScore] = useState(30)
   
-  // ✅ États temporaires pour les inputs (changent à chaque frappe)
+  // États temporaires pour les inputs (changent à chaque frappe)
   const [tempLimit, setTempLimit] = useState(12)
   const [tempMinScore, setTempMinScore] = useState(30)
 
@@ -478,7 +478,7 @@ export default function Recommendations() {
 
         <button
           onClick={() => {
-            // ✅ Met à jour les vraies valeurs utilisées par la requête
+            // Met à jour les vraies valeurs utilisées par la requête
             setLimit(tempLimit)
             setMinScore(tempMinScore)
           }}
