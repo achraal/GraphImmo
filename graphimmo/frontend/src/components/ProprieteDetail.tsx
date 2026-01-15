@@ -1,11 +1,10 @@
-// // src/components/ProprieteDetail.tsx
-// import { useQuery, useMutation} from '@apollo/client/react'
-// import { gql} from '@apollo/client'
+// import { useQuery, useMutation } from '@apollo/client/react'
+// import { gql } from '@apollo/client'
 // import { useParams, useNavigate } from 'react-router-dom'
-
+// import { useState, useEffect, useCallback } from 'react'
 
 // const GET_PROPRIETE_DETAIL = gql`
-//   query ProprieteComplete($id: String!, $token: String) {  // + $token
+//   query ProprieteComplete($id: String!, $token: String) {
 //     proprieteDetail(id: $id, token: $token) {
 //       id
 //       titre
@@ -44,24 +43,88 @@
 //     }
 //   }
 // `
-// const AJOUTER_FAVORI = gql`mutation AjouterFavori($proprieteId: String!, $token: String!, $note: String) { ajouterFavori(proprieteId: $proprieteId, token: $token, note: $note) }`
-// const EST_FAVORI = gql`query EstFavori($proprieteId: String!, $token: String!) { estFavori(proprieteId: $proprieteId, token: $token) }`
 
+// const AJOUTER_FAVORI = gql`mutation AjouterFavori($proprieteId: String!, $token: String!, $note: String) { 
+//   ajouterFavori(proprieteId: $proprieteId, token: $token, note: $note) 
+// }`
+
+// const EST_FAVORI = gql`query EstFavori($proprieteId: String!, $token: String!) { 
+//   estFavori(proprieteId: $proprieteId, token: $token) 
+// }`
+
+// const RETIRER_FAVORI = gql`mutation RetirerFavori($proprieteId: String!, $token: String!) { 
+//   retirerFavori(proprieteId: $proprieteId, token: $token) 
+// }`
 
 // export default function ProprieteDetail() {
 //   const { id } = useParams<{ id: string }>()
-//     const navigate = useNavigate()
-//   const token = localStorage.getItem('token')
+//   const navigate = useNavigate()
+  
+//   // Token réactif pour éviter stale closure
+//   const [token, setToken] = useState('')
+  
+//   useEffect(() => {
+//     if (typeof window !== 'undefined') {
+//       const storedToken = localStorage.getItem('token') || ''
+//       setToken(storedToken)
+//     }
+//   }, [])
 
-//   const [ajouterFavori, { loading: loadingFavori }] = useMutation(AJOUTER_FAVORI)
-//   const { data: favoriData } = useQuery(EST_FAVORI, { variables: { proprieteId: id!, token: token || '' }, skip: !id || !token })
-//   const isFavori = favoriData?.estFavori || false
+//   // Écoute changements localStorage (autres tabs)
+//   useEffect(() => {
+//     const handleStorageChange = (e: StorageEvent) => {
+//       if (e.key === 'token') {
+//         setToken(e.newValue || '')
+//       }
+//     }
+//     window.addEventListener('storage', handleStorageChange)
+//     return () => window.removeEventListener('storage', handleStorageChange)
+//   }, [])
 
-//   const { data, loading, error } = useQuery(GET_PROPRIETE_DETAIL, {
-//     variables: { id: id || '', token: token || '' },
-//     skip: !id,
+//   const { data, loading, error, refetch } = useQuery(GET_PROPRIETE_DETAIL, {
+//     variables: { id: id || '', token },
+//     skip: !id || !token,
 //   })
 
+//   const [ajouterFavori, { loading: loadingFavori }] = useMutation(AJOUTER_FAVORI, {
+//     refetchQueries: [
+//       EST_FAVORI,
+//       GET_PROPRIETE_DETAIL,  // Refresh détails si besoin
+//     ],
+//   })
+//   const [retirerFavori] = useMutation(RETIRER_FAVORI)
+
+//   const { data: favoriData } = useQuery(EST_FAVORI, { 
+//     variables: { proprieteId: id || '', token }, 
+//     skip: !id || !token 
+//   })
+//   const isFavori = favoriData?.estFavori || false
+
+
+//   const handleFavori = useCallback(async () => {
+//   if (!token || !id) { 
+//     alert('Connectez-vous pour gérer les favoris')
+//     navigate('/login') 
+//     return 
+//   }
+//   try {
+//     if (isFavori) {
+//       // Retire
+//       await retirerFavori({ 
+//         variables: { proprieteId: id, token },
+//         refetchQueries: [EST_FAVORI],
+//       })
+//     } else {
+//       // Ajoute
+//       await ajouterFavori({ 
+//         variables: { proprieteId: id, token, note: '' },
+//         refetchQueries: [EST_FAVORI],
+//       })
+//     }
+//   } catch (e) {
+//     alert('Erreur favori')
+//   }
+// }, [isFavori, ajouterFavori, retirerFavori, id, token, navigate])
 
 //   if (loading) return <div>Chargement détails...</div>
 //   if (error || !data?.proprieteDetail) 
@@ -69,24 +132,64 @@
 
 //   const prop = data.proprieteDetail
 
-//   const handleFavori = async () => {
-//   if (!token) { navigate('/login'); return }
-//     await ajouterFavori({ variables: { proprieteId: id!, token }, refetchQueries: ['EstFavori'] })
-//   }
-
-
 //   return (
 //     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
 //       {/* En-tête */}
 //       <h1 style={{ color: '#1e3a8a', marginBottom: '16px' }}>{prop.titre}</h1>
       
-//       {/* Infos principales */}
-//       <div style={{ 
-//         background: '#f8fafc', 
-//         padding: '20px', 
-//         borderRadius: '12px', 
-//         marginBottom: '24px' 
+//       {/* AJOUTER L'ID ICI */}
+//     <div style={{ 
+//       display: 'flex', 
+//       alignItems: 'center', 
+//       gap: '12px', 
+//       marginBottom: '16px',
+//       padding: '12px',
+//       background: '#f0f9ff',
+//       borderRadius: '8px',
+//       border: '1px solid #bae6fd'
+//     }}>
+//       <span style={{ 
+//         fontWeight: 600, 
+//         color: '#0369a1',
+//         fontSize: '14px'
 //       }}>
+//         🏷️ ID : <code style={{ 
+//           background: '#e0f2fe', 
+//           padding: '4px 8px', 
+//           borderRadius: '4px',
+//           fontFamily: 'monospace',
+//           fontSize: '15px',
+//           color: '#075985',
+//           userSelect: 'all'  // Permet de sélectionner facilement
+//         }}>{prop.id}</code>
+//       </span>
+//       <button
+//         onClick={() => {
+//           navigator.clipboard.writeText(prop.id)
+//           alert('ID copié dans le presse-papier !')
+//         }}
+//         style={{
+//           padding: '6px 12px',
+//           background: '#0ea5e9',
+//           color: 'white',
+//           border: 'none',
+//           borderRadius: '6px',
+//           cursor: 'pointer',
+//           fontSize: '13px',
+//           fontWeight: 500
+//         }}
+//       >
+//         📋 Copier
+//       </button>
+//     </div>
+    
+//     {/* Infos principales */}
+//     <div style={{ 
+//       background: '#f8fafc', 
+//       padding: '20px', 
+//       borderRadius: '12px', 
+//       marginBottom: '24px' 
+//     }}>
 //         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
 //           <div><strong>Prix :</strong> {prop.prix.toLocaleString('fr-MA')} MAD</div>
 //           <div><strong>Surface :</strong> {prop.surface} m²</div>
@@ -98,7 +201,7 @@
 //       </div>
 
 //       {/* Photos */}
-//       {prop.photos.length > 0 && (
+//       {prop.photos?.length > 0 && (
 //         <section style={{ marginBottom: '24px' }}>
 //           <h2>Photos</h2>
 //           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '12px' }}>
@@ -106,7 +209,7 @@
 //               <img 
 //                 key={`${prop.id}-${i}`}
 //                 src={photo.url} 
-//                 alt={`Photo ${photo.angle}`}
+//                 alt={`Photo ${photo.angle || i + 1}`}
 //                 style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
 //               />
 //             ))}
@@ -121,7 +224,7 @@
 //       </section>
 
 //       {/* Aménagements */}
-//       {prop.amenagements.length > 0 && (
+//       {prop.amenagements?.length > 0 && (
 //         <section style={{ marginBottom: '24px' }}>
 //           <h2>Aménagements</h2>
 //           <ul style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
@@ -159,315 +262,378 @@
 //           </div>
 //         </section>
 //       )}
-//         <div style={{ position: 'sticky', bottom: '20px', left: '50%', transform: 'translateX(-50%)', background: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', display: 'flex', gap: '12px', justifyContent: 'center' }}>
-//     <button onClick={handleFavori} disabled={loadingFavori} style={{ padding: '12px 24px', borderRadius: '8px', border: 'none', background: isFavori ? '#ef4444' : '#10b981', color: 'white', fontWeight: 600, cursor: 'pointer', fontSize: '16px' }}>
-//       {loadingFavori ? '...' : (isFavori ? '❤️ Retirer' : '💚 Favori')}
-//     </button>
-//   </div>
 
+//       {/* BOUTONS ACTIONS */}
+//       <div style={{ 
+//         position: 'sticky', bottom: '20px', left: '50%', 
+//         transform: 'translateX(-50%)', 
+//         background: 'white', padding: '16px', borderRadius: '12px',
+//         boxShadow: '0 10px 25px rgba(0,0,0,0.15)', zIndex: 10,
+//         display: 'flex', gap: '12px', justifyContent: 'center'
+//       }}>
+//         <button 
+//           onClick={handleFavori}
+//           disabled={loadingFavori}
+//           style={{
+//             padding: '12px 24px', borderRadius: '8px', border: 'none',
+//             background: isFavori ? '#ef4444' : '#10b981',
+//             color: 'white', fontWeight: 600, cursor: 'pointer',
+//             fontSize: '16px'
+//           }}
+//         >
+//           {loadingFavori ? '...' : (isFavori ? '❤️ Retirer favori' : '💚 Ajouter favori')}
+//         </button>
+//         {!token && (
+//           <button 
+//             onClick={() => navigate('/login')}
+//             style={{
+//               padding: '12px 24px', borderRadius: '8px', border: '1px solid #3b82f6',
+//               background: 'white', color: '#3b82f6', fontWeight: 600, cursor: 'pointer'
+//             }}
+//           >
+//             🔑 Se connecter
+//           </button>
+//         )}
+//       </div>
 //     </div>
 //   )
 // }
-// src/components/ProprieteDetail.tsx COMPLET corrigé
 
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useQuery, useMutation } from '@apollo/client/react';
+import { gql } from '@apollo/client';
+import {
+  Container, Typography, Box, Grid, Button, CardMedia,
+  Chip, Divider, Paper, Stack, Skeleton, IconButton, Avatar,
+  alpha, useTheme
+} from '@mui/material';
+import {
+  Favorite as FavoriteIcon,
+  FavoriteBorder as FavoriteBorderIcon,
+  ContentCopy as CopyIcon,
+  LocationOn as LocationIcon,
+  SquareFoot as SurfaceIcon,
+  KingBed as BedIcon,
+  Business as AgencyIcon,
+  Login as LoginIcon,
+  VerifiedUser as SecurityIcon,
+  TrendingUp as TrendIcon,
+  Phone as PhoneIcon,
+  ArrowBack as BackIcon
+} from '@mui/icons-material';
 
-import { useQuery, useMutation } from '@apollo/client/react'
-import { gql } from '@apollo/client'
-import { useParams, useNavigate } from 'react-router-dom'
-import { useState, useEffect, useCallback } from 'react'
-
+// --- GRAPHQL QUERIES ---
 const GET_PROPRIETE_DETAIL = gql`
   query ProprieteComplete($id: String!, $token: String) {
     proprieteDetail(id: $id, token: $token) {
-      id
-      titre
-      prix
-      adresse
-      description
-      surface
-      chambres
-      lat
-      lon
-      photos {
-        url
-        angle
-      }
-      amenagements {
-        id
-        type
-        qualite
-      }
-      localisation {
-        id
-        commune
-        region
-        prixM2
-        securite
-      }
-      agence {
-        id
-        nom
-        adresse
-        email
-        telephone
-      }
-      dateDepot
-      prixM2Local
+      id titre prix adresse description surface chambres lat lon dateDepot prixM2Local
+      photos { url angle }
+      amenagements { id type qualite }
+      localisation { id commune region prixM2 securite }
+      agence { id nom adresse email telephone }
     }
   }
-`
+`;
 
-const AJOUTER_FAVORI = gql`mutation AjouterFavori($proprieteId: String!, $token: String!, $note: String) { 
-  ajouterFavori(proprieteId: $proprieteId, token: $token, note: $note) 
-}`
+const AJOUTER_FAVORI = gql`
+  mutation AjouterFavori($proprieteId: String!, $token: String!, $note: String) {
+    ajouterFavori(proprieteId: $proprieteId, token: $token, note: $note)
+  }
+`;
 
-const EST_FAVORI = gql`query EstFavori($proprieteId: String!, $token: String!) { 
-  estFavori(proprieteId: $proprieteId, token: $token) 
-}`
+const EST_FAVORI = gql`
+  query EstFavori($proprieteId: String!, $token: String!) {
+    estFavori(proprieteId: $proprieteId, token: $token)
+  }
+`;
 
-const RETIRER_FAVORI = gql`mutation RetirerFavori($proprieteId: String!, $token: String!) { 
-  retirerFavori(proprieteId: $proprieteId, token: $token) 
-}`
+const RETIRER_FAVORI = gql`
+  mutation RetirerFavori($proprieteId: String!, $token: String!) {
+    retirerFavori(proprieteId: $proprieteId, token: $token)
+  }
+`;
 
 export default function ProprieteDetail() {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
-  
-  // Token réactif pour éviter stale closure
-  const [token, setToken] = useState('')
-  
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedToken = localStorage.getItem('token') || ''
-      setToken(storedToken)
-    }
-  }, [])
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const [token, setToken] = useState(localStorage.getItem('token') || '');
 
-  // Écoute changements localStorage (autres tabs)
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'token') {
-        setToken(e.newValue || '')
-      }
-    }
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
-  }, [])
+    const handleStorageChange = () => setToken(localStorage.getItem('token') || '');
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
-  const { data, loading, error, refetch } = useQuery(GET_PROPRIETE_DETAIL, {
+  const { data, loading, error } = useQuery(GET_PROPRIETE_DETAIL, {
     variables: { id: id || '', token },
+    skip: !id,
+  });
+
+  const { data: favoriData } = useQuery(EST_FAVORI, {
+    variables: { proprieteId: id || '', token },
     skip: !id || !token,
-  })
+  });
 
-  const [ajouterFavori, { loading: loadingFavori }] = useMutation(AJOUTER_FAVORI, {
-    refetchQueries: [
-      EST_FAVORI,
-      GET_PROPRIETE_DETAIL,  // Refresh détails si besoin
-    ],
-  })
-  const [retirerFavori] = useMutation(RETIRER_FAVORI)
+  const isFavori = favoriData?.estFavori || false;
 
-  const { data: favoriData } = useQuery(EST_FAVORI, { 
-    variables: { proprieteId: id || '', token }, 
-    skip: !id || !token 
-  })
-  const isFavori = favoriData?.estFavori || false
+  const [ajouterFavori, { loading: loadingAdd }] = useMutation(AJOUTER_FAVORI, {
+    refetchQueries: [{ query: EST_FAVORI, variables: { proprieteId: id, token } }],
+  });
 
+  const [retirerFavori, { loading: loadingRemove }] = useMutation(RETIRER_FAVORI, {
+    refetchQueries: [{ query: EST_FAVORI, variables: { proprieteId: id, token } }],
+  });
 
   const handleFavori = useCallback(async () => {
-  if (!token || !id) { 
-    alert('Connectez-vous pour gérer les favoris')
-    navigate('/login') 
-    return 
-  }
-  try {
-    if (isFavori) {
-      // Retire
-      await retirerFavori({ 
-        variables: { proprieteId: id, token },
-        refetchQueries: [EST_FAVORI],
-      })
-    } else {
-      // Ajoute
-      await ajouterFavori({ 
-        variables: { proprieteId: id, token, note: '' },
-        refetchQueries: [EST_FAVORI],
-      })
+    if (!token) return navigate('/login');
+    try {
+      if (isFavori) await retirerFavori({ variables: { proprieteId: id, token } });
+      else await ajouterFavori({ variables: { proprieteId: id, token, note: '' } });
+    } catch (e) { console.error(e); }
+  }, [isFavori, ajouterFavori, retirerFavori, id, token, navigate]);
+
+  const copyIdToClipboard = () => {
+    if (data?.proprieteDetail?.id) {
+      navigator.clipboard.writeText(data.proprieteDetail.id);
     }
-  } catch (e) {
-    alert('Erreur favori')
-  }
-}, [isFavori, ajouterFavori, retirerFavori, id, token, navigate])
+  };
 
-  if (loading) return <div>Chargement détails...</div>
-  if (error || !data?.proprieteDetail) 
-    return <div>Propriété introuvable ou erreur</div>
+  if (loading) return (
+    <Container maxWidth="lg" sx={{ py: 10 }}>
+      <Skeleton variant="rectangular" height={450} sx={{ borderRadius: 6 }} />
+      <Skeleton width="60%" height={60} sx={{ mt: 4 }} />
+    </Container>
+  );
 
-  const prop = data.proprieteDetail
+  if (error || !data?.proprieteDetail) return (
+    <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="80vh">
+      <Typography variant="h4" fontWeight={800} color="text.secondary">Bien introuvable.</Typography>
+      <Button startIcon={<BackIcon />} onClick={() => navigate('/')} variant="contained" sx={{ mt: 3, borderRadius: 3 }}>Retour à l'accueil</Button>
+    </Box>
+  );
+
+  const prop = data.proprieteDetail;
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
-      {/* En-tête */}
-      <h1 style={{ color: '#1e3a8a', marginBottom: '16px' }}>{prop.titre}</h1>
-      
-      {/* AJOUTER L'ID ICI */}
-    <div style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '12px', 
-      marginBottom: '16px',
-      padding: '12px',
-      background: '#f0f9ff',
-      borderRadius: '8px',
-      border: '1px solid #bae6fd'
-    }}>
-      <span style={{ 
-        fontWeight: 600, 
-        color: '#0369a1',
-        fontSize: '14px'
+    <Box sx={{ bgcolor: '#F8FAFC', minHeight: '100vh', pb: 15 }}>
+      {/* BARRE DE NAVIGATION CENTRÉE */}
+      <Paper elevation={0} sx={{ borderBottom: '1px solid #E2E8F0', bgcolor: 'white', position: 'sticky', top: 0, zIndex: 1000 }}>
+        <Container maxWidth="lg" sx={{ py: 1.5 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} color="inherit" sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
+              Retour
+            </Button>
+            <Chip 
+              label={`Référence: ${prop.id.substring(0,8)}`} 
+              size="small" 
+              onClick={copyIdToClipboard}
+              onDelete={copyIdToClipboard}
+              deleteIcon={<CopyIcon sx={{ fontSize: '14px !important' }} />}
+              sx={{ fontWeight: 800, bgcolor: '#F1F5F9', px: 1 }} 
+            />
+          </Stack>
+        </Container>
+      </Paper>
+
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        {/* GRILLE PRINCIPALE - CENTRÉE PAR DEFAUT PAR LE CONTAINER */}
+        <Grid container spacing={4} justifyContent="center">
+          
+          {/* COLONNE GAUCHE (CONTENU) */}
+          <Grid item xs={12} md={8}>
+            {/* GALERIE PHOTO STYLE "BENTO" */}
+            <Grid container spacing={1.5} sx={{ mb: 4 }}>
+              <Grid item xs={12} sm={8}>
+                <CardMedia
+                  component="img" image={prop.photos[0]?.url}
+                  sx={{ height: 480, borderRadius: 6, objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <Stack spacing={1.5} height="100%">
+                  <CardMedia
+                    component="img" image={prop.photos[1]?.url || prop.photos[0]?.url}
+                    sx={{ height: 232, borderRadius: 6, objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                  />
+                  <Box sx={{ position: 'relative', height: 232 }}>
+                    <CardMedia
+                      component="img" image={prop.photos[2]?.url || prop.photos[0]?.url}
+                      sx={{ height: '100%', borderRadius: 6, objectFit: 'cover', filter: prop.photos.length > 3 ? 'brightness(0.6)' : 'none' }}
+                    />
+                    {prop.photos.length > 3 && (
+                      <Typography variant="h4" sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: 'white', fontWeight: 900 }}>
+                        +{prop.photos.length - 2}
+                      </Typography>
+                    )}
+                  </Box>
+                </Stack>
+              </Grid>
+            </Grid>
+
+            {/* INFOS PRINCIPALES */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h3" fontWeight={950} sx={{ color: '#0F172A', mb: 1, letterSpacing: '-0.04em' }}>
+                {prop.titre}
+              </Typography>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ color: '#64748B' }}>
+                <LocationIcon fontSize="small" />
+                <Typography variant="h6" fontWeight={500}>{prop.adresse}</Typography>
+              </Stack>
+            </Box>
+
+            {/* CARTE DES CARACTÉRISTIQUES (CENTRÉE) */}
+            <Paper sx={{ p: 4, borderRadius: 6, mb: 5, border: '1px solid #E2E8F0', bgcolor: 'white' }} elevation={0}>
+              <Grid container spacing={3} justifyContent="center">
+                <Grid item xs={4} sx={{ textAlign: 'center' }}>
+                  <SurfaceIcon sx={{ color: theme.palette.primary.main, mb: 1, fontSize: 30 }} />
+                  <Typography variant="h5" fontWeight={900}>{prop.surface} m²</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, textTransform: 'uppercase' }}>Surface</Typography>
+                </Grid>
+                <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E2E8F0' }} />
+                <Grid item xs={4} sx={{ textAlign: 'center' }}>
+                  <BedIcon sx={{ color: theme.palette.primary.main, mb: 1, fontSize: 30 }} />
+                  <Typography variant="h5" fontWeight={900}>{prop.chambres} Ch.</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, textTransform: 'uppercase' }}>Pièces</Typography>
+                </Grid>
+                <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E2E8F0' }} />
+                <Grid item xs={3.5} sx={{ textAlign: 'center' }}>
+                  <TrendIcon sx={{ color: theme.palette.primary.main, mb: 1, fontSize: 30 }} />
+                  <Typography variant="h5" fontWeight={900}>{Math.round(prop.prix/prop.surface).toLocaleString()}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, textTransform: 'uppercase' }}>MAD / m²</Typography>
+                </Grid>
+              </Grid>
+            </Paper>
+
+            <Typography variant="h5" fontWeight={800} sx={{ mb: 2, color: '#1e293b' }}>Description du bien</Typography>
+            <Typography variant="body1" sx={{ color: '#475569', lineHeight: 1.8, mb: 6, fontSize: '1.1rem' }}>
+              {prop.description}
+            </Typography>
+
+            {/* ÉQUIPEMENTS */}
+            <Typography variant="h5" fontWeight={800} sx={{ mb: 3, color: '#1e293b' }}>Équipements & Aménagements</Typography>
+            <Grid container spacing={2}>
+              {prop.amenagements.map((amen: any) => (
+                <Grid item xs={12} sm={6} key={amen.id}>
+                  <Box sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 2, bgcolor: 'white', borderRadius: 5, border: '1px solid #E2E8F0' }}>
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main, fontWeight: 800 }}>
+                      {amen.type[0]}
+                    </Avatar>
+                    <Box>
+                      <Typography fontWeight={800} variant="body1">{amen.type}</Typography>
+                      <Typography variant="body2" color="text.secondary">{amen.qualite}</Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          </Grid>
+
+          {/* COLONNE DROITE (PRIX & CONTACT) - STICKY */}
+          <Grid item xs={12} md={4}>
+            <Box sx={{ position: 'sticky', top: 90 }}>
+              
+              {/* PRIX */}
+              <Paper elevation={0} sx={{ p: 4, borderRadius: 6, border: '1px solid #E2E8F0', bgcolor: 'white', mb: 3 }}>
+                <Typography variant="caption" fontWeight={800} color="primary" sx={{ textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                  Prix de vente
+                </Typography>
+                <Typography variant="h2" fontWeight={950} sx={{ color: '#0F172A', mt: 1, mb: 3, letterSpacing: '-0.02em' }}>
+                  {prop.prix.toLocaleString('fr-MA')} <span style={{ fontSize: '1.2rem', color: '#64748B' }}>MAD</span>
+                </Typography>
+                
+                <Stack spacing={2}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 2, bgcolor: '#F0FDF4', borderRadius: 4, border: '1px solid #DCFCE7' }}>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <SecurityIcon sx={{ color: '#16A34A' }} />
+                      <Typography variant="body2" fontWeight={800} color="#16A34A">Sécurité Quartier</Typography>
+                    </Stack>
+                    <Typography variant="h6" fontWeight={900} color="#16A34A">{prop.localisation.securite}/10</Typography>
+                  </Box>
+
+                  <Box sx={{ px: 1 }}>
+                    <Stack direction="row" justifyContent="space-between" sx={{ mb: 1.5 }}>
+                      <Typography color="text.secondary" fontWeight={500}>Commune</Typography>
+                      <Typography fontWeight={700}>{prop.localisation.commune}</Typography>
+                    </Stack>
+                    <Stack direction="row" justifyContent="space-between">
+                      <Typography color="text.secondary" fontWeight={500}>Région</Typography>
+                      <Typography fontWeight={700}>{prop.localisation.region}</Typography>
+                    </Stack>
+                  </Box>
+                </Stack>
+              </Paper>
+
+              {/* AGENCE */}
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 6, bgcolor: '#0F172A', color: 'white' }}>
+                <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+                  <Avatar sx={{ bgcolor: theme.palette.primary.main, width: 50, height: 50 }}>
+                    <AgencyIcon />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" fontWeight={800} noWrap sx={{ maxWidth: 200 }}>
+                      {prop.agence.nom}
+                    </Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.6, fontWeight: 600 }}>Agence Certifiée</Typography>
+                  </Box>
+                </Stack>
+                
+                <Button 
+                  variant="contained" 
+                  fullWidth 
+                  startIcon={<PhoneIcon />} 
+                  sx={{ 
+                    bgcolor: theme.palette.primary.main, 
+                    borderRadius: 4, 
+                    py: 1.5,
+                    fontSize: '1.1rem',
+                    fontWeight: 800,
+                    textTransform: 'none',
+                    boxShadow: '0 8px 16px rgba(79, 70, 229, 0.3)'
+                  }}
+                >
+                  {prop.agence.telephone}
+                </Button>
+                <Typography variant="caption" sx={{ textAlign: 'center', display: 'block', mt: 2, opacity: 0.5 }}>
+                  {prop.agence.email}
+                </Typography>
+              </Paper>
+            </Box>
+          </Grid>
+        </Grid>
+      </Container>
+
+      {/* ACTION BAR FLOTTANTE CENTRÉE */}
+      <Box sx={{ 
+        position: 'fixed', bottom: 40, left: '50%', transform: 'translateX(-50%)', 
+        zIndex: 1100, width: 'auto'
       }}>
-        🏷️ ID : <code style={{ 
-          background: '#e0f2fe', 
-          padding: '4px 8px', 
-          borderRadius: '4px',
-          fontFamily: 'monospace',
-          fontSize: '15px',
-          color: '#075985',
-          userSelect: 'all'  // Permet de sélectionner facilement
-        }}>{prop.id}</code>
-      </span>
-      <button
-        onClick={() => {
-          navigator.clipboard.writeText(prop.id)
-          alert('ID copié dans le presse-papier !')
-        }}
-        style={{
-          padding: '6px 12px',
-          background: '#0ea5e9',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          fontSize: '13px',
-          fontWeight: 500
-        }}
-      >
-        📋 Copier
-      </button>
-    </div>
-    
-    {/* Infos principales */}
-    <div style={{ 
-      background: '#f8fafc', 
-      padding: '20px', 
-      borderRadius: '12px', 
-      marginBottom: '24px' 
-    }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-          <div><strong>Prix :</strong> {prop.prix.toLocaleString('fr-MA')} MAD</div>
-          <div><strong>Surface :</strong> {prop.surface} m²</div>
-          <div><strong>Chambres :</strong> {prop.chambres}</div>
-          <div><strong>Adresse :</strong> {prop.adresse}</div>
-          {prop.prixM2Local && <div><strong>Prix m² local :</strong> {prop.prixM2Local} MAD</div>}
-          {prop.dateDepot && <div><strong>Dépôt :</strong> {new Date(prop.dateDepot).toLocaleDateString('fr-MA')}</div>}
-        </div>
-      </div>
-
-      {/* Photos */}
-      {prop.photos?.length > 0 && (
-        <section style={{ marginBottom: '24px' }}>
-          <h2>Photos</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '12px' }}>
-            {prop.photos.map((photo, i) => (
-              <img 
-                key={`${prop.id}-${i}`}
-                src={photo.url} 
-                alt={`Photo ${photo.angle || i + 1}`}
-                style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Description */}
-      <section style={{ marginBottom: '24px' }}>
-        <h2>Description</h2>
-        <p>{prop.description}</p>
-      </section>
-
-      {/* Aménagements */}
-      {prop.amenagements?.length > 0 && (
-        <section style={{ marginBottom: '24px' }}>
-          <h2>Aménagements</h2>
-          <ul style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
-            {prop.amenagements.map(amen => (
-              <li key={amen.id}>
-                <strong>{amen.type}</strong> ({amen.qualite})
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* Localisation */}
-      {prop.localisation && (
-        <section style={{ marginBottom: '24px', background: '#f0f9ff', padding: '16px', borderRadius: '8px' }}>
-          <h2>Localisation</h2>
-          <div>
-            <strong>Commune :</strong> {prop.localisation.commune}<br/>
-            <strong>Région :</strong> {prop.localisation.region}<br/>
-            <strong>Prix m² :</strong> {prop.localisation.prixM2} MAD<br/>
-            <strong>Sécurité :</strong> {prop.localisation.securite}
-          </div>
-        </section>
-      )}
-
-      {/* Agence */}
-      {prop.agence && (
-        <section style={{ marginBottom: '24px', background: '#f0fdf4', padding: '16px', borderRadius: '8px' }}>
-          <h2>Agence</h2>
-          <div>
-            <strong>{prop.agence.nom}</strong><br/>
-            {prop.agence.adresse}<br/>
-            📧 {prop.agence.email}<br/>
-            📞 {prop.agence.telephone}
-          </div>
-        </section>
-      )}
-
-      {/* BOUTONS ACTIONS */}
-      <div style={{ 
-        position: 'sticky', bottom: '20px', left: '50%', 
-        transform: 'translateX(-50%)', 
-        background: 'white', padding: '16px', borderRadius: '12px',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.15)', zIndex: 10,
-        display: 'flex', gap: '12px', justifyContent: 'center'
-      }}>
-        <button 
-          onClick={handleFavori}
-          disabled={loadingFavori}
-          style={{
-            padding: '12px 24px', borderRadius: '8px', border: 'none',
-            background: isFavori ? '#ef4444' : '#10b981',
-            color: 'white', fontWeight: 600, cursor: 'pointer',
-            fontSize: '16px'
-          }}
-        >
-          {loadingFavori ? '...' : (isFavori ? '❤️ Retirer favori' : '💚 Ajouter favori')}
-        </button>
-        {!token && (
-          <button 
-            onClick={() => navigate('/login')}
-            style={{
-              padding: '12px 24px', borderRadius: '8px', border: '1px solid #3b82f6',
-              background: 'white', color: '#3b82f6', fontWeight: 600, cursor: 'pointer'
-            }}
-          >
-            🔑 Se connecter
-          </button>
-        )}
-      </div>
-    </div>
-  )
+        <Paper elevation={12} sx={{ p: 1, borderRadius: 10, bgcolor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(20px)', border: '1px solid #E2E8F0' }}>
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant="contained"
+              onClick={handleFavori}
+              disabled={loadingAdd || loadingRemove}
+              startIcon={isFavori ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+              sx={{ 
+                borderRadius: 8, px: 6, py: 1.5,
+                bgcolor: isFavori ? '#EF4444' : '#0F172A',
+                '&:hover': { bgcolor: isFavori ? '#DC2626' : '#1e293b' },
+                textTransform: 'none', fontWeight: 900, minWidth: 250,
+                fontSize: '1rem'
+              }}
+            >
+              {isFavori ? "Retirer des favoris" : "Ajouter aux favoris"}
+            </Button>
+            {!token && (
+              <IconButton component={Link} to="/login" sx={{ bgcolor: '#F1F5F9', p: 2 }}>
+                <LoginIcon />
+              </IconButton>
+            )}
+          </Stack>
+        </Paper>
+      </Box>
+    </Box>
+  );
 }

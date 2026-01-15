@@ -12,15 +12,23 @@ from fastapi import Depends
 from typing import Optional, List
 from jose import JWTError, jwt
 from datetime import datetime, timedelta, timezone
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # Connexion Neo4j (adapte avec tes creds Graphimmo)
-driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "megustacolombiana"))
+driver = GraphDatabase.driver(
+    os.getenv("NEO4J_URI"),
+    auth=(os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD"))
+)
+SECRET_KEY = os.getenv("SECRET_KEY")
+
 
 #SECRET_KEY = secrets.token_hex(32)
-SECRET_KEY = "graphimmo_super_secret_32_chars_12345678901234567890"
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 10080))  
+
 # pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
