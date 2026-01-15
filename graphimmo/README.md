@@ -1,36 +1,38 @@
 # GraphImmo - Real Estate Mapping Platform
 
-A full-stack web application for exploring, comparing, and managing real estate properties using a Neo4j graph database. Built with a Python FastAPI backend and a React TypeScript frontend with interactive mapping features.
+A full-stack web application for exploring, comparing, and managing real estate properties using a Neo4j graph database. Built with FastAPI + Uvicorn backend and a React TypeScript frontend with interactive mapping features.
 
 ## Project Overview
 
 GraphImmo is a comprehensive real estate platform that enables users to:
-- Browse properties on an interactive map
+- Browse properties on an interactive map with clustering
 - Search and filter properties by various criteria
 - Compare multiple properties side-by-side
 - View detailed property information with photos and amenities
 - Manage property visit requests (for buyers and agents)
-- Access personalized recommendations
+- Access personalized property recommendations
 - Manage agent/buyer profiles and analytics
 
 ## Tech Stack
 
 ### Backend
 - **Framework**: FastAPI 0.128.0
+- **Server**: Uvicorn 0.40.0 (ASGI server)
+- **API Query Language**: Strawberry GraphQL 0.288.1
 - **Database**: Neo4j 6.0.3 (Graph Database)
-- **GraphQL**: Strawberry GraphQL 0.288.1
-- **Authentication**: JWT tokens with Argon2 password hashing
-- **API Security**: HTTP Bearer tokens, CORS middleware
-- **Runtime**: Uvicorn
+- **Database Driver**: neo4j-python 6.0.3
+- **Authentication**: JWT (python-jose) + Argon2 password hashing
+- **Security**: HTTP Bearer tokens, CORS middleware
+- **Environment Management**: python-dotenv
 
 ### Frontend
 - **Framework**: React 19.2.0
 - **Language**: TypeScript 5.9.3
 - **Build Tool**: Vite 7.2.4
-- **Styling**: Tailwind CSS
-- **UI Library**: Material-UI (MUI)
-- **Mapping**: Leaflet, react-leaflet, MapLibre GL
-- **API Client**: Apollo Client 4.0.11
+- **Styling**: Tailwind CSS 4.1.18 + PostCSS
+- **UI Components**: Material-UI (MUI) 7.3.7
+- **Mapping**: Leaflet 1.9.4, react-leaflet 5.0.0, MapLibre GL 5.15.0
+- **GraphQL Client**: Apollo Client 4.0.11
 - **Routing**: React Router DOM 7.11.0
 
 ## Project Structure
@@ -144,12 +146,14 @@ graphimmo/
    ACCESS_TOKEN_EXPIRE_MINUTES=10080
    ```
 
-5. **Run the backend server**:
+5. **Run the backend server with Uvicorn**:
    ```bash
-   uvicorn main:app --reload
+   uvicorn main:app --reload --host 0.0.0.0 --port 8000
    ```
-   The API will be available at `http://localhost:8000`
-   GraphQL endpoint: `http://localhost:8000/graphql`
+   - The FastAPI application will be served on `http://localhost:8000`
+   - GraphQL endpoint: `http://localhost:8000/graphql`
+   - API docs: `http://localhost:8000/docs`
+   - The `--reload` flag enables auto-restart on code changes (development only)
 
 ### Frontend Setup
 
@@ -240,18 +244,27 @@ Relationships include:
 
 ## Available Scripts
 
-### Backend
+### Backend (Uvicorn)
 ```bash
-python main.py  # Run development server
-python test.py  # Run tests
+# Development server with auto-reload
+uvicorn main:app --reload
+
+# Production server
+uvicorn main:app --host 0.0.0.0 --port 8000
+
+# With specific host and port
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+# Run tests
+python test.py
 ```
 
 ### Frontend
 ```bash
-npm run dev      # Development server
-npm run build    # Production build
-npm run lint     # ESLint code checking
-npm run preview  # Preview production build
+npm run dev      # Start Vite dev server (http://localhost:5173)
+npm run build    # Create optimized production build
+npm run lint     # Run ESLint code checking
+npm run preview  # Preview production build locally
 ```
 
 ## Contributing
