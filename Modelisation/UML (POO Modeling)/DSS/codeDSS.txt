@@ -1,0 +1,44 @@
+@startuml GraphImmo_DSS_Recherche_Complet
+!theme plain
+
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+skinparam actor {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+}
+
+title **GraphImmo** - Recherche de Propriétés (DSS)
+
+actor "Acheteur" as user
+participant "Système GraphImmo" as system
+
+== Initialisation ==
+user -> system: Accéder à la carte
+activate system
+system --> user: Affichage de la zone géographique par défaut
+deactivate system
+
+== Action de Recherche ==
+user -> system: Appliquer filtres (Budget: 200k-500k)
+activate system
+
+alt Propriétés trouvées
+    system --> user: Afficher les marqueurs sur la carte + Liste
+else Aucune propriété ne correspond
+    system --> user: Message "Aucun bien ne correspond à vos critères"
+else Erreur de saisie (ex: budget négatif)
+    system --> user: Notification d'erreur de filtrage
+end
+
+deactivate system
+
+== Interaction avec un résultat ==
+user -> system: Sélectionner une propriété
+activate system
+system --> user: Afficher détails (prix, agence, description)
+deactivate system
+
+@enduml
