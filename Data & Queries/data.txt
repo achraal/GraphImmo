@@ -845,4 +845,266 @@ RETURN a.id, a.nom;
 -----------------------------------------
 
 -----------------------------------------
+CREATE (a:Agence {id: "AGENT002", nom: "Tanger Luxury Immo", adresse: "Boulevard Mohamed VI, Tanger", telephone: "+212539123456", email: "contact@tanger-luxury.ma"})
 
+WITH a
+
+CREATE (a)-[:GERE {date_depot: date()}]->(:Propriete {id:"PROP016", titre:"Palais Royal Mirage", prix:85000000, surface:2200, chambres:10, geo:[35.792, -5.856], adresse:"Vieille Montagne", description:"Propriété de milliardaire, vue sur le Détroit."})
+
+CREATE (a)-[:GERE {date_depot: date()}]->(:Propriete {id:"PROP017", titre:"Villa Malabata Bay", prix:9500000, surface:450, chambres:5, geo:[35.772, -5.778], adresse:"Malabata", description:"Villa contemporaine face à la mer."})
+
+CREATE (a)-[:GERE {date_depot: date()}]->(:Propriete {id:"PROP018", titre:"Maison California", prix:6200000, surface:400, chambres:4, geo:[35.758, -5.832], adresse:"Quartier California", description:"Havre de paix avec grand jardin."})
+
+CREATE (a)-[:GERE {date_depot: date()}]->(:Propriete {id:"PROP019", titre:"Penthouse Marshan", prix:4200000, surface:210, chambres:3, geo:[35.785, -5.821], adresse:"Le Marshan", description:"Style colonial revisité."})
+
+CREATE (a)-[:GERE {date_depot: date()}]->(:Propriete {id:"PROP020", titre:"Riad de la Kasbah", prix:3800000, surface:300, chambres:6, geo:[35.789, -5.812], adresse:"La Kasbah", description:"Rénovation noble."});
+
+// 1. Création des quartiers de Tanger
+MERGE (l1:Localisation {id: "LOC_TNG_MONTAGNE", commune: "Tanger", region: "Tanger-Tétouan-Al Hoceïma", prix_m2: 25000, securite: "Très Élevée", latitude: 35.790, longitude: -5.850})
+MERGE (l2:Localisation {id: "LOC_TNG_MALABATA", commune: "Tanger", region: "Tanger-Tétouan-Al Hoceïma", prix_m2: 18000, securite: "Élevée", latitude: 35.770, longitude: -5.770})
+MERGE (l3:Localisation {id: "LOC_TNG_KASBAH", commune: "Tanger", region: "Tanger-Tétouan-Al Hoceïma", prix_m2: 15000, securite: "Moyenne", latitude: 35.788, longitude: -5.811})
+
+WITH l1, l2, l3
+// 2. Liaison des propriétés existantes
+MATCH (p16:Propriete {id: "PROP016"})
+MATCH (p17:Propriete {id: "PROP017"})
+MATCH (p18:Propriete {id: "PROP018"})
+MATCH (p19:Propriete {id: "PROP019"})
+MATCH (p20:Propriete {id: "PROP020"})
+
+// 3. Création des relations DANSQUARTIER
+CREATE (p16)-[:DANSQUARTIER {prix_m2_local: 38636}]->(l1) // Palais (85M / 2200m2)
+CREATE (p17)-[:DANSQUARTIER {prix_m2_local: 21111}]->(l2) // Villa Malabata
+CREATE (p18)-[:DANSQUARTIER {prix_m2_local: 15500}]->(l1) // California (rattaché Montagne)
+CREATE (p19)-[:DANSQUARTIER {prix_m2_local: 20000}]->(l3) // Marshan (rattaché Kasbah)
+CREATE (p20)-[:DANSQUARTIER {prix_m2_local: 12666}]->(l3); // Riad Kasbah
+
+
+// 1. Définition des Aménagements (MERGE pour éviter les doublons)
+MERGE (amPiscine:Amenagement {id: "AM_PISCINE", type: "Piscine", qualite: "Haute"})
+MERGE (amHeli:Amenagement {id: "AM_HELIPORT", type: "Héliport", qualite: "Exceptionnelle"})
+MERGE (amGarage:Amenagement {id: "AM_GARAGE", type: "Garage", qualite: "Standard"})
+MERGE (amSecu:Amenagement {id: "AM_SECURITE", type: "Système de Sécurité", qualite: "Haute"})
+MERGE (amTerrasse:Amenagement {id: "AM_TERRASSE", type: "Terrasse", qualite: "Haute"})
+
+WITH amPiscine, amHeli, amGarage, amSecu, amTerrasse
+
+// 2. Match des propriétés existantes de Tanger
+MATCH (p16:Propriete {id: "PROP016"})
+MATCH (p17:Propriete {id: "PROP017"})
+MATCH (p18:Propriete {id: "PROP018"})
+MATCH (p19:Propriete {id: "PROP019"})
+MATCH (p20:Propriete {id: "PROP020"})
+
+// 3. Création des relations POSSEDE_AMENAGEMENT
+// Le Palais (Piscine + Héliport + Sécurité)
+CREATE (p16)-[:POSSEDE_AMENAGEMENT]->(amPiscine)
+CREATE (p16)-[:POSSEDE_AMENAGEMENT]->(amHeli)
+CREATE (p16)-[:POSSEDE_AMENAGEMENT]->(amSecu)
+
+// Villa Malabata (Piscine + Garage)
+CREATE (p17)-[:POSSEDE_AMENAGEMENT]->(amPiscine)
+CREATE (p17)-[:POSSEDE_AMENAGEMENT]->(amGarage)
+
+// Maison California (Garage + Sécurité)
+CREATE (p18)-[:POSSEDE_AMENAGEMENT]->(amGarage)
+CREATE (p18)-[:POSSEDE_AMENAGEMENT]->(amSecu)
+
+// Penthouse Marshan (Terrasse)
+CREATE (p19)-[:POSSEDE_AMENAGEMENT]->(amTerrasse)
+
+// Riad Kasbah (Terrasse)
+CREATE (p20)-[:POSSEDE_AMENAGEMENT]->(amTerrasse);
+
+
+// 1. Match des propriétés de Tanger déjà existantes
+MATCH (p16:Propriete {id: "PROP016"})
+MATCH (p17:Propriete {id: "PROP017"})
+MATCH (p18:Propriete {id: "PROP018"})
+MATCH (p19:Propriete {id: "PROP019"})
+MATCH (p20:Propriete {id: "PROP020"})
+
+// 2. Ajout des photos pour le Palais Royal Mirage (PROP016)
+CREATE (p16)-[:APHOTO]->(:Photo {id: "P016_1", url: "https://images.unsplash.com/photo-1613490493576-7fde63acd811", angle: "Vue mer", qualite: "HD", date_upload: date()})
+CREATE (p16)-[:APHOTO]->(:Photo {id: "P016_2", url: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750", angle: "Salon", qualite: "HD", date_upload: date()})
+
+// 3. Ajout des photos pour la Villa Malabata Bay (PROP017)
+CREATE (p17)-[:APHOTO]->(:Photo {id: "P017_1", url: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914", angle: "Facade", qualite: "HD", date_upload: date()})
+CREATE (p17)-[:APHOTO]->(:Photo {id: "P017_2", url: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6", angle: "Piscine", qualite: "HD", date_upload: date()})
+
+// 4. Ajout des photos pour la Maison California (PROP018)
+CREATE (p18)-[:APHOTO]->(:Photo {id: "P018_1", url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c", angle: "Interieur", qualite: "HD", date_upload: date()})
+
+// 5. Ajout des photos pour le Penthouse Marshan (PROP019)
+CREATE (p19)-[:APHOTO]->(:Photo {id: "P019_1", url: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267", angle: "Salon", qualite: "HD", date_upload: date()})
+CREATE (p19)-[:APHOTO]->(:Photo {id: "P019_2", url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688", angle: "Vue mer", qualite: "HD", date_upload: date()})
+
+// 6. Ajout des photos pour le Riad de la Kasbah (PROP020)
+CREATE (p20)-[:APHOTO]->(:Photo {id: "P020_1", url: "https://images.unsplash.com/photo-1531303435785-3853ba035cda", angle: "Facade", qualite: "HD", date_upload: date()})
+CREATE (p20)-[:APHOTO]->(:Photo {id: "P020_2", url: "https://images.unsplash.com/photo-1533411802315-998845014387", angle: "Interieur", qualite: "HD", date_upload: date()});
+
+
+----------------------------
+
+// Création de l'Agence
+CREATE (a:Agence {id: "AGENT002", nom: "Marrakech Gold Estates", adresse: "Avenue Mohamed VI, Hivernage", telephone: "+212524123456", email: "contact@marrakech-gold.ma"})
+
+// Création des Localisations (Quartiers)
+MERGE (l4:Localisation {id: "LOC_RAK_PALMERAIE", commune: "Marrakech", region: "Marrakech-Safi", prix_m2: 22000, securite: "Élevée", latitude: 31.666, longitude: -7.965})
+MERGE (l5:Localisation {id: "LOC_RAK_HIVERNAGE", commune: "Marrakech", region: "Marrakech-Safi", prix_m2: 28000, securite: "Très Élevée", latitude: 31.621, longitude: -8.014})
+
+// Création des Aménagements
+MERGE (amSpa:Amenagement {id: "AM_SPA", type: "Spa & Hammam", qualite: "Haute"})
+MERGE (amPiscine:Amenagement {id: "AM_PISCINE", type: "Piscine", qualite: "Haute"})
+
+WITH a, l4, l5, amSpa, amPiscine
+
+// Propriété 021 - Ultra Luxe
+CREATE (p21:Propriete {id:"PROP021", titre:"Domaine des Oliviers", prix:120000000, surface:4500, chambres:12, geo:[31.666, -7.965], adresse:"La Palmeraie", description:"Palais privé pour milliardaires."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p21)
+CREATE (p21)-[:DANSQUARTIER {prix_m2_local: 26666}]->(l4)
+CREATE (p21)-[:POSSEDE_AMENAGEMENT]->(amSpa)
+CREATE (p21)-[:APHOTO]->(:Photo {id: "P021_1", url: "https://url-rak-palais.jpg", angle: "Vue d'ensemble", qualite: "HD"})
+
+// Propriété 022
+CREATE (p22:Propriete {id:"PROP022", titre:"Villa Amelkis Golf", prix:14500000, surface:800, chambres:6, geo:[31.615, -7.932], adresse:"Amelkis", description:"Vue Atlas et Golf."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p22)
+CREATE (p22)-[:DANSQUARTIER {prix_m2_local: 18125}]->(l4)
+CREATE (p22)-[:POSSEDE_AMENAGEMENT]->(amPiscine)
+
+// Propriétés 023, 024, 025 (Standard luxe)
+CREATE (p23:Propriete {id:"PROP023", titre:"Appartement Hivernage", prix:5800000, surface:190, chambres:3, geo:[31.621, -8.014], adresse:"L'Hivernage", description:"Prestige urbain."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p23)
+CREATE (p23)-[:DANSQUARTIER {prix_m2_local: 30526}]->(l5)
+
+CREATE (p24:Propriete {id:"PROP024", titre:"Riad Dar El Bacha", prix:8900000, surface:550, chambres:7, geo:[31.633, -7.994], adresse:"Medina", description:"Riad historique."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p24)
+CREATE (p24)-[:DANSQUARTIER {prix_m2_local: 16181}]->(l5)
+
+CREATE (p25:Propriete {id:"PROP025", titre:"Villa Palmeraie Moderne", prix:7500000, surface:1200, chambres:5, geo:[31.660, -7.960], adresse:"Route de Fès", description:"Design contemporain."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p25)
+CREATE (p25)-[:DANSQUARTIER {prix_m2_local: 6250}]->(l4);
+
+
+-----------------------------------
+
+CREATE (a:Agence {id: "AGENT002", nom: "Fès Patrimoine Immo", adresse: "Avenue Allal Ben Abdellah", telephone: "+212535123456", email: "contact@fes-patrimoine.ma"})
+
+MERGE (l6:Localisation {id: "LOC_FES_BALI", commune: "Fès", region: "Fès-Meknès", prix_m2: 15000, securite: "Moyenne", latitude: 34.062, longitude: -4.978})
+MERGE (l7:Localisation {id: "LOC_FES_VILLENOUVELLE", commune: "Fès", region: "Fès-Meknès", prix_m2: 12000, securite: "Élevée", latitude: 34.032, longitude: -5.002})
+
+WITH a, l6, l7
+
+CREATE (p26:Propriete {id:"PROP026", titre:"Palais Al-Andalus", prix:35000000, surface:1800, chambres:15, geo:[34.062, -4.978], adresse:"Fès-El-Bali", description:"Chef-d'œuvre pour milliardaire."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p26)
+CREATE (p26)-[:DANSQUARTIER {prix_m2_local: 19444}]->(l6)
+CREATE (p26)-[:APHOTO]->(:Photo {id: "P026_1", url: "https://url-fes-palais.jpg", angle: "Patio", qualite: "HD"})
+
+CREATE (p27:Propriete {id:"PROP027", titre:"Villa Champ de Course", prix:7200000, surface:600, chambres:5, geo:[34.032, -5.002], adresse:"Ville Nouvelle", description:"Villa bourgeoise."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p27)
+CREATE (p27)-[:DANSQUARTIER {prix_m2_local: 12000}]->(l7)
+
+CREATE (p28:Propriete {id:"PROP028", titre:"Maison Oued Fès", prix:4500000, surface:450, chambres:4, geo:[34.051, -4.991], adresse:"Oued Fès", description:"Bord de golf."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p28)
+CREATE (p28)-[:DANSQUARTIER {prix_m2_local: 10000}]->(l7)
+
+CREATE (p29:Propriete {id:"PROP029", titre:"Riad d'Artiste", prix:2900000, surface:320, chambres:5, geo:[34.065, -4.973], adresse:"Medina", description:"Rénovation contemporaine."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p29)
+CREATE (p29)-[:DANSQUARTIER {prix_m2_local: 9062}]->(l6)
+
+CREATE (p30:Propriete {id:"PROP030", titre:"Villa Saada", prix:5100000, surface:500, chambres:5, geo:[34.015, -5.021], adresse:"Route d'Imouzzer", description:"Calme résidentiel."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p30)
+CREATE (p30)-[:DANSQUARTIER {prix_m2_local: 10200}]->(l7);
+
+
+---------------------------
+
+CREATE (a:Agence {id: "AGENT002", nom: "Agadir Marina Sun", adresse: "Boulevard du 20 Août", telephone: "+212528123456", email: "contact@agadir-sun.ma"})
+
+MERGE (l8:Localisation {id: "LOC_AGA_FOUNTY", commune: "Agadir", region: "Souss-Massa", prix_m2: 16000, securite: "Élevée", latitude: 30.401, longitude: -9.582})
+MERGE (l9:Localisation {id: "LOC_AGA_MARINA", commune: "Agadir", region: "Souss-Massa", prix_m2: 25000, securite: "Très Élevée", latitude: 30.421, longitude: -9.615})
+
+WITH a, l8, l9
+
+CREATE (p31:Propriete {id:"PROP031", titre:"The Oceanic Mansion", prix:42000000, surface:1100, chambres:7, geo:[30.427, -9.621], adresse:"Baie d'Agadir", description:"Pieds dans l'eau luxe absolu."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p31)
+CREATE (p31)-[:DANSQUARTIER {prix_m2_local: 38181}]->(l8)
+CREATE (p31)-[:POSSEDE_AMENAGEMENT]->(:Amenagement {id: "AM_DOMO", type: "Domotique", qualite: "Haute"})
+
+CREATE (p32:Propriete {id:"PROP032", titre:"Appartement Marina Yacht", prix:6500000, surface:180, chambres:2, geo:[30.421, -9.615], adresse:"Marina Agadir", description:"Vue port."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p32)
+CREATE (p32)-[:DANSQUARTIER {prix_m2_local: 36111}]->(l9)
+
+CREATE (p33:Propriete {id:"PROP033", titre:"Villa Hay Founty", prix:8800000, surface:550, chambres:5, geo:[30.401, -9.582], adresse:"Founty", description:"Quartier huppé."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p33)
+CREATE (p33)-[:DANSQUARTIER {prix_m2_local: 16000}]->(l8)
+
+CREATE (p34:Propriete {id:"PROP034", titre:"Maison Charaf", prix:3200000, surface:300, chambres:4, geo:[30.432, -9.588], adresse:"Quartier Charaf", description:"Villa ensoleillée."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p34)
+CREATE (p34)-[:DANSQUARTIER {prix_m2_local: 10666}]->(l8)
+
+CREATE (p35:Propriete {id:"PROP035", titre:"Domaine Taghazout Bay", prix:12500000, surface:700, chambres:6, geo:[30.544, -9.708], adresse:"Taghazout Bay", description:"Luxe face océan."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p35)
+CREATE (p35)-[:DANSQUARTIER {prix_m2_local: 17857}]->(l9);
+
+
+----------------------------------------------------
+
+CREATE (a:Agence {id: "AGENT006", nom: "Oriental Prestige", adresse: "Boulevard Mohammed V, Oujda", telephone: "+212536123456", email: "contact@oujda-prestige.ma"})
+
+MERGE (l10:Localisation {id: "LOC_OUJ_ALQODS", commune: "Oujda", region: "Oriental", prix_m2: 9000, securite: "Moyenne", latitude: 34.671, longitude: -1.898})
+MERGE (l11:Localisation {id: "LOC_OUJ_SAIDIA", commune: "Saïdia", region: "Oriental", prix_m2: 13000, securite: "Élevée", latitude: 35.081, longitude: -2.231})
+
+WITH a, l10, l11
+
+CREATE (p36:Propriete {id:"PROP036", titre:"L'Empire de l'Oriental", prix:22000000, surface:1500, chambres:9, geo:[34.685, -1.912], adresse:"Route d'Ahfir", description:"Demeure souveraine."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p36)
+CREATE (p36)-[:DANSQUARTIER {prix_m2_local: 14666}]->(l10)
+
+CREATE (p37:Propriete {id:"PROP037", titre:"Villa Al Qods Luxe", prix:5500000, surface:500, chambres:6, geo:[34.671, -1.898], adresse:"Bd Al Qods", description:"Finition premium."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p37)
+CREATE (p37)-[:DANSQUARTIER {prix_m2_local: 11000}]->(l10)
+
+CREATE (p38:Propriete {id:"PROP038", titre:"Villa Lazaret Prestige", prix:3100000, surface:350, chambres:4, geo:[34.662, -1.921], adresse:"Lazaret", description:"Villa spacieuse."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p38)
+CREATE (p38)-[:DANSQUARTIER {prix_m2_local: 8857}]->(l10)
+
+CREATE (p39:Propriete {id:"PROP039", titre:"Appartement Isly", prix:1800000, surface:160, chambres:3, geo:[34.681, -1.905], adresse:"Quartier Isly", description:"Investissement idéal."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p39)
+CREATE (p39)-[:DANSQUARTIER {prix_m2_local: 11250}]->(l10)
+
+CREATE (p40:Propriete {id:"PROP040", titre:"Villa Saïdia Pearl", prix:7900000, surface:600, chambres:5, geo:[35.081, -2.231], adresse:"Station Saïdia", description:"Villa de vacances."})
+CREATE (a)-[:GERE {date_depot: date()}]->(p40)
+CREATE (p40)-[:DANSQUARTIER {prix_m2_local: 13166}]->(l11);
+
+-------------------------------
+
+
+// 1. Reset des anciennes relations
+MATCH (p1:Propriete)-[r:SIMILAIRE_PAR_AMENAGEMENT]->(p2) DELETE r;
+
+// 2. Calcul de similarité (Jaccard)
+MATCH (p:Propriete)-[:POSSEDE_AMENAGEMENT]->(a:Amenagement)
+WITH p, collect(DISTINCT a.type) AS types
+WITH collect({node: p, types: types}) AS data
+
+UNWIND data AS d1
+UNWIND data AS d2
+WITH d1, d2 
+WHERE id(d1.node) < id(d2.node)
+
+// INTERSECTION : Éléments présents dans les deux listes
+WITH d1.node AS p1, d2.node AS p2, d1.types AS t1, d2.types AS t2,
+     [x IN d1.types WHERE x IN d2.types] AS intersection
+
+// UNION : t1 + (les éléments de t2 qui ne sont pas dans t1)
+WITH p1, p2, intersection,
+     t1 + [y IN t2 WHERE NOT y IN t1] AS union
+
+// Calcul du score (Intersection / Union)
+WITH p1, p2, size(intersection) * 1.0 / size(union) AS score
+WHERE score >= 0.5
+
+CREATE (p1)-[:SIMILAIRE_PAR_AMENAGEMENT {scoreAmenagement: round(score, 3)}]->(p2);
+
+RETURN 'SIMILAIRE_PAR_AMENAGEMENT OK (Sans APOC)';
