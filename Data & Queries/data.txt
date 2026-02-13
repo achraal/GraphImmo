@@ -1108,3 +1108,17 @@ WHERE score >= 0.5
 CREATE (p1)-[:SIMILAIRE_PAR_AMENAGEMENT {scoreAmenagement: round(score, 3)}]->(p2);
 
 RETURN 'SIMILAIRE_PAR_AMENAGEMENT OK (Sans APOC)';
+-------------------------------
+UNWIND range(20, 40) AS num
+WITH "PROP0" + num AS propId, num
+MATCH (p:Propriete {id: propId})
+// On crée la photo seulement si elle n'existe pas déjà
+MERGE (ph:Photo {id: "P0" + num + "_1"})
+ON CREATE SET 
+    ph.date_upload = date(), 
+    ph.angle = "Vue générale", 
+    ph.qualite = "HD", 
+    ph.url = "https://images.unsplash.com/photo-default-placeholder"
+// On crée la relation
+MERGE (p)-[:APHOTO]->(ph)
+RETURN p.id, ph.id, ph.url
